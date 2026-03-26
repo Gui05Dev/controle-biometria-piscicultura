@@ -1,0 +1,18 @@
+{
+  "name": "Controle de Biometria — Copacol",
+  "short_name": "Biometria",
+  "description": "Sistema de gestão e controle de biometria para piscicultura",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a3d1a",
+  "theme_color": "#2d6b2d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2614/2614300.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
