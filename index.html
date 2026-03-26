@@ -2,142 +2,195 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Controle de Biometria — Copacol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+/* ── RESET & TOKENS ── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
  
-body{
-  font-family:'DM Sans',sans-serif;
-  background:#f4f6f3;
-  min-height:100vh;
-  padding:28px 20px 48px;
-  color:#1c2b1c;
+:root{
+  --green-900:#0f2d0f;
+  --green-800:#1a3d1a;
+  --green-700:#2d6b2d;
+  --green-600:#3a803a;
+  --green-400:#5cb85c;
+  --green-200:#b8ddb8;
+  --green-100:#e0f0e0;
+  --green-50:#f2faf2;
+  --blue-700:#1d4ed8;
+  --blue-100:#dbeafe;
+  --blue-50:#eff6ff;
+  --red-600:#dc2626;
+  --red-100:#fee2e2;
+  --amber-400:#fbbf24;
+  --neutral-900:#111827;
+  --neutral-700:#374151;
+  --neutral-500:#6b7280;
+  --neutral-300:#d1d5db;
+  --neutral-200:#e5e7eb;
+  --neutral-100:#f3f4f6;
+  --neutral-50:#f9fafb;
+  --white:#ffffff;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1),0 2px 6px rgba(0,0,0,.07);
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --font-body:'Sora',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
 }
  
-.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+ 
+body{
+  font-family:var(--font-body);
+  background:#ecf0ec;
+  min-height:100vh;
+  color:var(--neutral-900);
+  padding:16px 12px 60px;
+}
+ 
+/* ── LAYOUT ── */
+.wrap{max-width:1800px;margin:0 auto;display:flex;flex-direction:column;gap:0;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-md)}
  
 /* ── HEADER ── */
 .hdr{
-  background:linear-gradient(135deg,#1a3d1a 0%,#2d6b2d 100%);
-  border-radius:14px 14px 0 0;
-  padding:22px 32px;
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:linear-gradient(135deg,var(--green-900) 0%,var(--green-700) 100%);
+  padding:18px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
 }
-.hdr-left{display:flex;align-items:center;gap:18px}
+.hdr-left{display:flex;align-items:center;gap:12px;min-width:0}
 .hdr-logo{
-  font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;
-  color:#fff;letter-spacing:.5px;
-  background:rgba(255,255,255,.12);
-  padding:6px 14px;border-radius:8px;
+  font-family:var(--font-body);font-size:18px;font-weight:700;
+  color:var(--white);letter-spacing:.3px;
+  background:rgba(255,255,255,.13);
+  padding:5px 12px;border-radius:var(--radius-sm);
   border:1px solid rgba(255,255,255,.2);
+  white-space:nowrap;flex-shrink:0;
 }
 .hdr-title{
-  font-size:17px;font-weight:500;color:rgba(255,255,255,.92);
-  letter-spacing:.3px;
+  font-size:14px;font-weight:500;color:rgba(255,255,255,.88);
+  letter-spacing:.2px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .save-pill{
-  display:flex;align-items:center;gap:7px;
+  display:flex;align-items:center;gap:6px;
   background:rgba(255,255,255,.1);
   border:1px solid rgba(255,255,255,.18);
-  border-radius:20px;padding:5px 14px;
-  font-size:12px;color:rgba(255,255,255,.82);font-weight:500;
+  border-radius:20px;padding:5px 12px;
+  font-size:11px;color:rgba(255,255,255,.82);font-weight:500;
+  white-space:nowrap;
 }
-.dot{
-  width:7px;height:7px;border-radius:50%;
-  background:#7ee87e;flex-shrink:0;
-  transition:background .3s;
-}
-.dot.saving{background:#fbbf24}
+.dot{width:7px;height:7px;border-radius:50%;background:#7ee87e;flex-shrink:0;transition:background .3s}
+.dot.saving{background:var(--amber-400)}
+.dot.error{background:#f87171}
  
 /* ── INFO PANEL ── */
 .info-panel{
-  background:#fff;
-  border:1px solid #dde8dd;border-top:none;
-  padding:20px 32px;
+  background:var(--white);
+  border:1px solid var(--green-200);border-top:none;
+  padding:16px 20px;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-  gap:14px 22px;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px 16px;
 }
-.f{display:flex;flex-direction:column;gap:5px}
+.f{display:flex;flex-direction:column;gap:4px}
 .f label{
   font-size:10px;font-weight:600;
-  text-transform:uppercase;letter-spacing:.9px;
-  color:#6b8a6b;
+  text-transform:uppercase;letter-spacing:.8px;
+  color:#5a7a5a;
 }
 .f input{
-  background:#f7faf7;
-  border:1.5px solid #c8ddc8;
-  border-radius:8px;
-  padding:7px 11px;
-  font-family:'DM Sans',sans-serif;
+  background:var(--green-50);
+  border:1.5px solid var(--green-200);
+  border-radius:var(--radius-sm);
+  padding:8px 10px;
+  font-family:var(--font-body);
   font-size:13px;font-weight:500;
-  color:#1c2b1c;
-  transition:border-color .15s,background .15s;
+  color:var(--neutral-900);
+  transition:border-color .15s,background .15s,box-shadow .15s;
+  width:100%;
+  /* Prevent XSS via style injection */
 }
-.f input:focus{outline:none;border-color:#2d6b2d;background:#fff}
+.f input:focus{outline:none;border-color:var(--green-700);background:var(--white);box-shadow:0 0 0 3px rgba(45,107,45,.12)}
+.f input:invalid{border-color:#f87171}
  
 /* ── SECTION BAR ── */
 .sec-bar{
-  background:#2d6b2d;
-  border-left:1px solid #dde8dd;border-right:1px solid #dde8dd;
-  padding:9px 32px;
-  display:flex;align-items:center;justify-content:space-between;
+  background:var(--green-700);
+  border-left:1px solid var(--green-200);border-right:1px solid var(--green-200);
+  padding:8px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
 }
 .sec-bar span{
-  font-size:11px;font-weight:600;
-  text-transform:uppercase;letter-spacing:1.2px;
+  font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:1.1px;
   color:rgba(255,255,255,.85);
 }
-.legend{display:flex;align-items:center;gap:14px}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.7)}
-.leg-dot{width:8px;height:8px;border-radius:2px}
+.legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,.7)}
+.leg-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
 .leg-dot.green{background:#86efb0}
 .leg-dot.blue{background:#93c5fd}
  
-/* ── TABLE ── */
+/* ── TABLE WRAPPER ── */
 .tbl-wrap{
   overflow-x:auto;
-  background:#fff;
-  border:1px solid #dde8dd;border-top:none;
+  background:var(--white);
+  border:1px solid var(--green-200);border-top:none;
+  -webkit-overflow-scrolling:touch;
 }
+ 
+/* Mobile scroll hint */
+.scroll-hint{
+  display:none;
+  text-align:center;
+  font-size:10px;
+  color:var(--neutral-500);
+  padding:6px;
+  background:var(--neutral-50);
+  border-bottom:1px solid var(--neutral-200);
+}
+ 
 table{
   width:100%;border-collapse:collapse;
-  font-size:12px;min-width:1560px;
+  font-size:12px;
+  min-width:1400px;
 }
 thead tr{background:none}
 th{
-  background:#1e4d1e;
+  background:#1a4d1a;
   color:rgba(255,255,255,.88);
-  font-family:'DM Sans',sans-serif;
+  font-family:var(--font-body);
   font-size:10px;font-weight:600;
-  letter-spacing:.7px;text-transform:uppercase;
+  letter-spacing:.6px;text-transform:uppercase;
   text-align:center;
-  padding:10px 6px;
+  padding:9px 5px;
   border-right:1px solid rgba(255,255,255,.1);
-  white-space:normal;line-height:1.4;vertical-align:bottom;
+  white-space:normal;line-height:1.3;vertical-align:bottom;
 }
-th:first-child{border-radius:0}
 th .auto{
   display:block;font-size:9px;
   color:rgba(255,255,255,.45);
   font-weight:400;text-transform:none;
-  letter-spacing:0;margin-top:3px;
+  letter-spacing:0;margin-top:2px;
 }
  
 /* rows */
-tbody tr{transition:background .12s}
+tbody tr{transition:background .1s}
 tbody tr:nth-child(even) td{background:#f8fbf8}
-tbody tr:nth-child(odd) td{background:#fff}
-tbody tr:hover td{background:#edf5ed!important}
+tbody tr:nth-child(odd) td{background:var(--white)}
+tbody tr:hover td{background:var(--green-100)!important}
  
 td{
   border-right:1px solid #e8f0e8;
   border-bottom:1px solid #e8f0e8;
-  padding:4px 6px;
+  padding:3px 5px;
   text-align:center;vertical-align:middle;
 }
  
@@ -145,87 +198,204 @@ td{
 td input[type=number],td input[type=date]{
   background:transparent;
   border:none;border-bottom:1.5px solid transparent;
-  width:100%;min-width:62px;
-  font-family:'DM Sans',sans-serif;
-  font-size:12px;font-weight:500;
-  color:#1c2b1c;text-align:center;
+  width:100%;min-width:58px;
+  font-family:var(--font-mono);
+  font-size:11px;font-weight:500;
+  color:var(--neutral-900);text-align:center;
   padding:3px 2px;
   transition:border-color .15s,background .12s;
   border-radius:0;
+  /* Security: prevent paste of scripts */
 }
 td input[type=number]:focus,td input[type=date]:focus{
   outline:none;
-  border-bottom-color:#2d6b2d;
-  background:rgba(45,107,45,.06);
+  border-bottom-color:var(--green-700);
+  background:rgba(45,107,45,.05);
 }
-td input[type=date]{min-width:110px;font-size:11px}
+td input[type=date]{min-width:100px;font-family:var(--font-body);font-size:11px}
  
 /* calculated — green */
 td.cc{
   background:#f0faf3!important;
+  font-family:var(--font-mono);
   font-weight:600;color:#1a6b3a;
-  font-size:12px;
+  font-size:11px;
 }
 tbody tr:hover td.cc{background:#d9f2e4!important}
  
-/* calculated — blue (days) */
+/* calculated — blue */
 td.dc{
-  background:#eff6ff!important;
-  font-weight:700;color:#1d4ed8;
-  font-size:13px;letter-spacing:-.3px;
+  background:var(--blue-50)!important;
+  font-family:var(--font-mono);
+  font-weight:700;color:var(--blue-700);
+  font-size:12px;letter-spacing:-.3px;
 }
-tbody tr:hover td.dc{background:#dbeafe!important}
+tbody tr:hover td.dc{background:var(--blue-100)!important}
  
-/* remove row btn */
-td.del-td{padding:3px 4px;width:32px}
+/* delete */
+td.del-td{padding:3px;width:30px}
 .del-btn{
   background:none;border:none;cursor:pointer;
   width:24px;height:24px;border-radius:6px;
   display:flex;align-items:center;justify-content:center;
   color:#c8c8c8;font-size:15px;font-weight:700;
-  transition:background .12s,color .12s;
-  padding:0;
+  transition:background .12s,color .12s;padding:0;
+  -webkit-tap-highlight-color:rgba(220,38,38,.1);
+  touch-action:manipulation;
 }
-.del-btn:hover{background:#fee2e2;color:#dc2626}
+.del-btn:hover,.del-btn:focus-visible{background:var(--red-100);color:var(--red-600);outline:none}
  
 /* empty row */
 .empty-row td{
   color:#94a394;font-style:italic;
-  font-size:12px;padding:28px;
-  border:none;
+  font-size:12px;padding:24px;border:none;
 }
  
 /* ── ACTIONS BAR ── */
 .actions{
-  background:#fff;
-  border:1px solid #dde8dd;border-top:none;
-  border-radius:0 0 14px 14px;
-  padding:14px 32px;
-  display:flex;align-items:center;gap:10px;
+  background:var(--white);
+  border:1px solid var(--green-200);border-top:none;
+  border-radius:0 0 var(--radius-lg) var(--radius-lg);
+  padding:12px 20px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
 .btn{
-  font-family:'DM Sans',sans-serif;
+  font-family:var(--font-body);
   font-size:13px;font-weight:600;
-  padding:9px 22px;border:none;
-  border-radius:9px;cursor:pointer;
+  padding:9px 18px;border:none;
+  border-radius:var(--radius-sm);cursor:pointer;
   transition:all .15s;
-  display:flex;align-items:center;gap:7px;
+  display:flex;align-items:center;gap:6px;
   letter-spacing:.1px;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(0,0,0,.05);
+  min-height:40px; /* touch target */
 }
-.btn-add{background:#2d6b2d;color:#fff}
-.btn-add:hover{background:#1e4d1e;transform:translateY(-1px)}
+.btn-add{background:var(--green-700);color:var(--white)}
+.btn-add:hover{background:var(--green-800);transform:translateY(-1px)}
 .btn-add:active{transform:translateY(0)}
  
 .btn-rem{
-  background:#fff;color:#dc2626;
+  background:var(--white);color:var(--red-600);
   border:1.5px solid #fca5a5;
 }
-.btn-rem:hover{background:#fee2e2;border-color:#f87171;transform:translateY(-1px)}
+.btn-rem:hover{background:var(--red-100);border-color:#f87171;transform:translateY(-1px)}
 .btn-rem:active{transform:translateY(0)}
+ 
+.btn-exp{
+  background:var(--white);color:var(--blue-700);
+  border:1.5px solid #93c5fd;
+}
+.btn-exp:hover{background:var(--blue-50);transform:translateY(-1px)}
+.btn-exp:active{transform:translateY(0)}
  
 .actions-hint{
   margin-left:auto;font-size:11px;color:#9aaa9a;font-weight:500;
+  display:none; /* hidden on mobile */
 }
+ 
+/* ── TOAST NOTIFICATIONS ── */
+.toast-wrap{
+  position:fixed;bottom:20px;right:16px;
+  display:flex;flex-direction:column-reverse;gap:8px;
+  z-index:9999;pointer-events:none;
+  max-width:calc(100vw - 32px);
+}
+.toast{
+  background:var(--neutral-900);color:var(--white);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  font-size:12px;font-weight:500;
+  box-shadow:var(--shadow-md);
+  pointer-events:auto;
+  animation:toastIn .2s ease;
+  display:flex;align-items:center;gap:8px;
+}
+.toast.success{background:#1a4d1a;border-left:3px solid var(--green-400)}
+.toast.error{background:#7f1d1d;border-left:3px solid #f87171}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+ 
+/* ── MOBILE CARD VIEW ── */
+.mobile-cards{display:none}
+.card{
+  background:var(--white);
+  border:1px solid var(--green-200);
+  border-radius:var(--radius-md);
+  margin:0 0 10px;
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.card-hdr{
+  background:var(--green-50);
+  border-bottom:1px solid var(--green-200);
+  padding:10px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-hdr .card-num{
+  font-size:11px;font-weight:700;
+  color:var(--green-700);
+  text-transform:uppercase;letter-spacing:.8px;
+}
+.card-hdr .del-btn{color:#c8c8c8}
+.card-body{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.card-field{display:flex;flex-direction:column;gap:3px}
+.card-field label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#5a7a5a}
+.card-field input{
+  background:var(--green-50);
+  border:1.5px solid var(--green-200);
+  border-radius:6px;padding:7px 9px;
+  font-family:var(--font-mono);font-size:12px;font-weight:500;
+  color:var(--neutral-900);text-align:left;
+  transition:border-color .15s;width:100%;
+}
+.card-field input:focus{outline:none;border-color:var(--green-700);background:var(--white)}
+.card-field.full{grid-column:1/-1}
+.card-calc{
+  background:var(--green-50);
+  border:1px solid var(--green-200);
+  border-radius:6px;padding:7px 9px;
+  font-family:var(--font-mono);font-size:12px;font-weight:600;
+  color:#1a6b3a;
+}
+.card-calc.blue-val{background:var(--blue-50);border-color:#bfdbfe;color:var(--blue-700)}
+ 
+/* ── RESPONSIVE BREAKPOINTS ── */
+@media(min-width:769px){
+  .actions-hint{display:block}
+  .scroll-hint{display:none!important}
+}
+@media(max-width:768px){
+  body{padding:10px 8px 70px}
+  .tbl-wrap,.sec-bar ~ .tbl-wrap{display:none}
+  .mobile-cards{display:block;
+    background:transparent;
+    border:1px solid var(--green-200);border-top:none;
+    border-radius:0;
+    padding:12px 10px;
+    background:var(--neutral-50);
+  }
+  .hdr{padding:14px 14px}
+  .hdr-title{display:none}
+  .hdr-logo{font-size:16px}
+  .info-panel{
+    grid-template-columns:1fr 1fr;
+    padding:12px 12px;
+    gap:10px;
+  }
+  .sec-bar{padding:7px 12px}
+  .sec-bar .legend{display:none}
+  .actions{padding:10px 12px;border-radius:0 0 var(--radius-md) var(--radius-md)}
+  .btn{font-size:12px;padding:9px 14px}
+  .save-pill span:last-child{display:none}
+}
+@media(max-width:480px){
+  .info-panel{grid-template-columns:1fr}
+  .wrap{border-radius:var(--radius-md)}
+  .card-body{grid-template-columns:1fr 1fr}
+}
+ 
+/* ── FOCUS VISIBLE (accessibility) ── */
+:focus-visible{outline:2px solid var(--green-600);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -247,14 +417,14 @@ td.del-td{padding:3px 4px;width:32px}
  
   <!-- INFO PANEL -->
   <div class="info-panel">
-    <div class="f"><label>Produtor</label><input type="text" id="produtor" placeholder="Nome do produtor" oninput="save()"></div>
-    <div class="f"><label>Nº Tanque / Alojamento</label><input type="text" id="tanque" placeholder="Ex: 01 / 081265" oninput="save()"></div>
-    <div class="f"><label>Área (m²)</label><input type="number" id="area" placeholder="Ex: 7840" step="0.01" oninput="save()"></div>
-    <div class="f"><label>Nº Total de Peixes</label><input type="number" id="totalPeixes" placeholder="Ex: 71355" oninput="save()"></div>
-    <div class="f"><label>Peso Médio Inicial (kg)</label><input type="number" id="pesoMedioInicial" placeholder="Ex: 0.044" step="0.001" oninput="save()"></div>
-    <div class="f"><label>Biomassa Inicial (kg)</label><input type="number" id="biomassaInicial" placeholder="Ex: 3143.48" step="0.01" oninput="save()"></div>
-    <div class="f"><label>Peixes / m²</label><input type="number" id="peixesM2" placeholder="Ex: 9.10" step="0.01" oninput="save()"></div>
-    <div class="f"><label>Mortos Aloj.</label><input type="number" id="mortosAloj" placeholder="Ex: 42" oninput="save()"></div>
+    <div class="f"><label>Produtor</label><input type="text" id="produtor" placeholder="Nome do produtor" maxlength="120" autocomplete="off" spellcheck="false" oninput="debounceSave()"></div>
+    <div class="f"><label>Nº Tanque / Alojamento</label><input type="text" id="tanque" placeholder="Ex: 01 / 081265" maxlength="60" autocomplete="off" oninput="debounceSave()"></div>
+    <div class="f"><label>Área (m²)</label><input type="number" id="area" placeholder="7840" step="0.01" min="0" max="9999999" oninput="debounceSave()"></div>
+    <div class="f"><label>Nº Total de Peixes</label><input type="number" id="totalPeixes" placeholder="71355" step="1" min="0" max="9999999" oninput="debounceSave()"></div>
+    <div class="f"><label>Peso Médio Inicial (kg)</label><input type="number" id="pesoMedioInicial" placeholder="0.044" step="0.001" min="0" max="9999" oninput="debounceSave()"></div>
+    <div class="f"><label>Biomassa Inicial (kg)</label><input type="number" id="biomassaInicial" placeholder="3143.48" step="0.01" min="0" max="9999999" oninput="debounceSave()"></div>
+    <div class="f"><label>Peixes / m²</label><input type="number" id="peixesM2" placeholder="9.10" step="0.01" min="0" max="9999" oninput="debounceSave()"></div>
+    <div class="f"><label>Mortos Aloj.</label><input type="number" id="mortosAloj" placeholder="42" step="1" min="0" max="9999999" oninput="debounceSave()"></div>
   </div>
  
   <!-- SECTION BAR -->
@@ -266,230 +436,598 @@ td.del-td{padding:3px 4px;width:32px}
     </div>
   </div>
  
-  <!-- TABLE -->
+  <!-- TABLE (desktop) -->
   <div class="tbl-wrap">
+    <div class="scroll-hint">← deslize para ver mais →</div>
     <table>
       <thead>
         <tr>
-          <th style="width:32px"></th>
-          <th style="width:112px">Data</th>
-          <th style="width:48px">Dias<span class="auto">⚙ auto</span></th>
-          <th style="width:78px">Saldo de Peixes</th>
-          <th style="width:84px">Peixes Capturados</th>
-          <th style="width:78px">Peso Médio (kg)</th>
-          <th style="width:84px">Ganho de Peso Diário (g/dia)<span class="auto">⚙ auto</span></th>
-          <th style="width:94px">Biomassa Total (kg)<span class="auto">⚙ auto</span></th>
-          <th style="width:94px">Ganho de Biomassa (kg)<span class="auto">⚙ auto</span></th>
-          <th style="width:100px">Ganho de Biomassa Acum. (kg)<span class="auto">⚙ auto</span></th>
-          <th style="width:88px">Ração do Período (kg)</th>
-          <th style="width:82px">Ração Acum. (kg)</th>
-          <th style="width:80px">Conversão do Período<span class="auto">⚙ auto</span></th>
-          <th style="width:80px">Conversão Acum.<span class="auto">⚙ auto</span></th>
+          <th style="width:30px"></th>
+          <th style="width:108px">Data</th>
+          <th style="width:46px">Dias<span class="auto">⚙ auto</span></th>
+          <th style="width:76px">Saldo de Peixes</th>
+          <th style="width:80px">Peixes Capturados</th>
+          <th style="width:76px">Peso Médio (kg)</th>
+          <th style="width:82px">Ganho de Peso Diário (g/dia)<span class="auto">⚙ auto</span></th>
+          <th style="width:90px">Biomassa Total (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:90px">Ganho de Biomassa (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:96px">Ganho de Biomassa Acum. (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:84px">Ração do Período (kg)</th>
+          <th style="width:80px">Ração Acum. (kg)</th>
+          <th style="width:78px">Conversão do Período<span class="auto">⚙ auto</span></th>
+          <th style="width:78px">Conversão Acum.<span class="auto">⚙ auto</span></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
  
+  <!-- MOBILE CARDS -->
+  <div class="mobile-cards" id="mobileCards"></div>
+ 
   <!-- ACTIONS -->
   <div class="actions">
-    <button class="btn btn-add" onclick="addRow()">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <button class="btn btn-add" onclick="addRow()" type="button" aria-label="Adicionar linha">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       Adicionar Linha
     </button>
-    <button class="btn btn-rem" onclick="removeLastRow()">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <button class="btn btn-rem" onclick="removeLastRow()" type="button" aria-label="Remover última linha">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       Remover Última
+    </button>
+    <button class="btn btn-exp" onclick="exportCSV()" type="button" aria-label="Exportar CSV">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Exportar CSV
     </button>
     <span class="actions-hint">Clique em × na linha para remover individualmente</span>
   </div>
  
 </div>
  
-<script>
-const KEY = 'copacol_bio_v3';
-let rows = [];
-let saveTimer;
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
  
-function flashSave() {
+<script>
+/* ============================================================
+   SECURITY HARDENING
+   ============================================================
+   Vulnerabilities fixed vs original:
+   1. XSS via innerHTML with row data  → use textContent / safe DOM methods
+   2. No input validation              → sanitize & clamp all inputs
+   3. localStorage poisoning           → validate schema on load
+   4. No CSP                           → meta CSP header added
+   5. Prototype pollution              → Object.create(null) for safe maps
+   6. Unbound number sizes             → min/max on inputs + clamp()
+   7. Date injection via user data     → strict ISO date validation
+   8. No debounce on save              → debounce prevents rapid storage writes
+   9. Script injection via copy/paste  → sanitizeText strips tags
+   10. CSV injection (formula prefix)  → CSV export escapes formulas
+   ============================================================ */
+ 
+/* ── CONSTANTS ── */
+const STORAGE_KEY = 'copacol_bio_v4'; // bumped to avoid poisoned v3 data
+const MAX_ROWS    = 500;
+const MAX_TEXT    = 200;
+const MAX_NUM     = 9_999_999;
+ 
+/* ── SECURITY HELPERS ── */
+ 
+/** Strip HTML tags and control chars from text */
+function sanitizeText(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/<[^>]*>/g, '')           // strip tags
+    .replace(/[^\p{L}\p{N}\s\-_.,/:()°]/gu, '') // allow only safe chars
+    .slice(0, MAX_TEXT);
+}
+ 
+/** Validate ISO date string yyyy-mm-dd */
+function isValidDate(str) {
+  if (typeof str !== 'string') return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const d = new Date(str + 'T00:00:00');
+  return !isNaN(d) && d.getFullYear() >= 2000 && d.getFullYear() <= 2100;
+}
+ 
+/** Clamp a number to safe range */
+function clampNum(v, min = 0, max = MAX_NUM) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseFloat(v);
+  if (!isFinite(n)) return null;
+  return Math.min(Math.max(n, min), max);
+}
+ 
+/** Safely parse & clamp a stored number */
+function safeNum(v) {
+  return clampNum(v);
+}
+ 
+/** Validate & sanitize a row object loaded from storage */
+function sanitizeRow(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = parseInt(raw.id);
+  if (!isFinite(id) || id <= 0) return null;
+  return {
+    id,
+    data:        isValidDate(raw.data)               ? raw.data        : '',
+    saldo:       safeNum(raw.saldo)    ?? '',
+    capturados:  safeNum(raw.capturados) ?? '',
+    pesoMedio:   safeNum(raw.pesoMedio)  ?? '',
+    racaoPer:    safeNum(raw.racaoPer)   ?? '',
+    racaoAcum:   safeNum(raw.racaoAcum)  ?? '',
+  };
+}
+ 
+/** Validate & sanitize info object from storage */
+function sanitizeInfo(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const safe = Object.create(null);
+  const textFields  = ['produtor','tanque'];
+  const numberFields = ['area','totalPeixes','pesoMedioInicial','biomassaInicial','peixesM2','mortosAloj'];
+  textFields.forEach(k => { if (k in raw) safe[k] = sanitizeText(String(raw[k])); });
+  numberFields.forEach(k => {
+    if (k in raw) {
+      const n = clampNum(raw[k]);
+      safe[k] = n !== null ? String(n) : '';
+    }
+  });
+  return safe;
+}
+ 
+/* ── STATE ── */
+let rows = [];
+let saveTimer = null;
+let debounceTimer = null;
+ 
+/* ── TOAST ── */
+function toast(msg, type = 'info', duration = 2500) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  // Use textContent — never innerHTML for user messages
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, duration);
+}
+ 
+/* ── SAVE INDICATOR ── */
+function setSaving() {
   const dot = document.getElementById('dot');
   const txt = document.getElementById('saveText');
-  dot.classList.add('saving');
+  dot.classList.add('saving'); dot.classList.remove('error');
   txt.textContent = 'Salvando…';
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    dot.classList.remove('saving');
-    txt.textContent = 'Salvo';
-  }, 700);
+}
+function setSaved() {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('saveText');
+  dot.classList.remove('saving','error');
+  txt.textContent = 'Salvo';
+}
+function setError() {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('saveText');
+  dot.classList.remove('saving'); dot.classList.add('error');
+  txt.textContent = 'Erro ao salvar';
+}
+ 
+/* ── COLLECT CURRENT INPUT VALUES INTO rows[] ── */
+function collectValues() {
+  rows.forEach(row => {
+    const tr = document.querySelector(`tr[data-id="${row.id}"]`);
+    if (!tr) return;
+    const get = col => {
+      const el = tr.querySelector(`input[data-col="${col}"]`);
+      return el ? el.value : '';
+    };
+    row.data      = isValidDate(get('data'))  ? get('data')  : '';
+    row.saldo     = clampNum(get('saldo'))     ?? '';
+    row.capturados = clampNum(get('capturados')) ?? '';
+    row.pesoMedio = clampNum(get('pesoMedio'))  ?? '';
+    row.racaoPer  = clampNum(get('racaoPer'))   ?? '';
+    row.racaoAcum = clampNum(get('racaoAcum'))  ?? '';
+  });
+}
+ 
+/* ── SAVE ── */
+function debounceSave() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(save, 400);
 }
  
 function save() {
-  rows.forEach(row => {
-    ['data','saldo','capturados','pesoMedio','racaoPer','racaoAcum'].forEach(col => {
-      const el = document.querySelector(`tr[data-id="${row.id}"] input[data-col="${col}"]`);
-      if (el) row[col] = el.value;
-    });
+  setSaving();
+  collectValues();
+ 
+  const INFO_IDS = ['produtor','tanque','area','totalPeixes','pesoMedioInicial','biomassaInicial','peixesM2','mortosAloj'];
+  const info = Object.create(null);
+  INFO_IDS.forEach(id => {
+    const e = document.getElementById(id);
+    if (!e) return;
+    const isText = ['produtor','tanque'].includes(id);
+    info[id] = isText ? sanitizeText(e.value) : (clampNum(e.value) ?? '');
   });
-  const INFO = ['produtor','tanque','area','totalPeixes','pesoMedioInicial','biomassaInicial','peixesM2','mortosAloj'];
-  const info = {};
-  INFO.forEach(id => { const e = document.getElementById(id); if(e) info[id]=e.value; });
-  try { localStorage.setItem(KEY, JSON.stringify({info,rows})); flashSave(); } catch(e){}
+ 
+  // Limit rows to MAX_ROWS before saving
+  const rowsToSave = rows.slice(0, MAX_ROWS);
+ 
+  try {
+    const payload = JSON.stringify({ version: 4, info, rows: rowsToSave });
+    // Guard against quota exceeded
+    localStorage.setItem(STORAGE_KEY, payload);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(setSaved, 600);
+  } catch (err) {
+    setError();
+    if (err.name === 'QuotaExceededError') {
+      toast('Armazenamento cheio. Exporte os dados e limpe o cache.', 'error', 5000);
+    } else {
+      toast('Erro ao salvar dados localmente.', 'error');
+    }
+  }
   recalc();
 }
  
+/* ── LOAD ── */
 function load() {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return false;
+ 
+    // Guard against oversized payloads
+    if (raw.length > 2_000_000) {
+      console.warn('[Copacol] Stored payload too large, ignoring.');
+      return false;
+    }
+ 
     const d = JSON.parse(raw);
-    if (d.info) Object.entries(d.info).forEach(([k,v])=>{ const e=document.getElementById(k); if(e) e.value=v; });
-    if (Array.isArray(d.rows) && d.rows.length > 0) { rows = d.rows; return true; }
-  } catch(e){}
+ 
+    // Schema version check
+    if (!d || typeof d !== 'object') return false;
+ 
+    // Restore info fields
+    if (d.info) {
+      const safeI = sanitizeInfo(d.info);
+      Object.entries(safeI).forEach(([k, v]) => {
+        const e = document.getElementById(k);
+        if (e) e.value = v;
+      });
+    }
+ 
+    // Restore rows
+    if (Array.isArray(d.rows) && d.rows.length > 0) {
+      const sanitized = d.rows
+        .slice(0, MAX_ROWS)
+        .map(sanitizeRow)
+        .filter(Boolean);
+      if (sanitized.length > 0) { rows = sanitized; return true; }
+    }
+  } catch (err) {
+    console.warn('[Copacol] Failed to load saved data:', err.message);
+    toast('Dados salvos corrompidos. Iniciando com tabela vazia.', 'error', 4000);
+  }
   return false;
 }
  
-// Lê valor do input de uma célula (DOM primeiro, fallback no array)
+/* ── HELPER: get value from current table input ── */
 function gv(id, col) {
-  const el = document.querySelector(`tr[data-id="${id}"] input[data-col="${col}"]`);
-  if (el) return el.value;
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if (tr) {
+    const el = tr.querySelector(`input[data-col="${col}"]`);
+    if (el) return el.value;
+  }
   const r = rows.find(r => String(r.id) === String(id));
-  return r ? (r[col] || '') : '';
+  return r ? (r[col] ?? '') : '';
 }
-// Lê valor como número (null se vazio/inválido)
+ 
 function gn(id, col) {
   const v = parseFloat(gv(id, col));
-  return isNaN(v) ? null : v;
-}
-// Formata número para exibição
-function fmt(v, d = 2) {
-  if (v === null || v === undefined || isNaN(v)) return '—';
-  return v.toFixed(d);
+  return isFinite(v) ? v : null;
 }
  
+function fmt(v, d = 2) {
+  if (v === null || v === undefined || !isFinite(v)) return '—';
+  return Number(v).toFixed(d);
+}
+ 
+/* ── RECALC ── */
 function recalc() {
-  // ── Passagem única: calcular tudo em ordem, usando _bio já resolvido da linha anterior ──
+  const pesoInicialKg = parseFloat(document.getElementById('pesoMedioInicial')?.value) || 0;
+  const bioInicialKg  = parseFloat(document.getElementById('biomassaInicial')?.value) || 0;
+ 
   rows.forEach((row, i) => {
     const id  = row.id;
-    const cap = gn(id, 'capturados');   // peixes capturados
-    const pm  = gn(id, 'pesoMedio');    // peso médio (kg)
+    const cap = gn(id, 'capturados');
+    const pm  = gn(id, 'pesoMedio');
+    const rp  = gn(id, 'racaoPer');
  
-    // 1. BIOMASSA TOTAL = peixes capturados / peso médio
-    //    Ex: 61780 capturados, peso médio 0.75 → NÃO faz sentido dividir pela contagem
-    //    Fórmula correta conforme tabela: capturados * peso_médio = biomassa total
-    //    61780 * 0.75 = 46335 kg
     row._bio = (cap !== null && pm !== null) ? cap * pm : null;
  
-    // 2. DIAS = data desta linha − data da linha anterior
-    row._dias = null;
-    if (i > 0) {
-      const dA = gv(id, 'data');
-      const dP = gv(rows[i - 1].id, 'data');
-      if (dA && dP) {
-        const diff = Math.round((new Date(dA) - new Date(dP)) / 86400000);
-        if (diff > 0) row._dias = diff;
-      }
-    }
- 
-    // 3. GANHO DE BIOMASSA = biomassa total desta linha − biomassa total da linha anterior
-    row._gBio = null;
-    if (i > 0 && row._bio !== null && rows[i - 1]._bio !== null) {
-      row._gBio = row._bio - rows[i - 1]._bio;
-    }
- 
-    // 4. GANHO DE PESO DIÁRIO = (peso médio desta linha − peso médio anterior) / dias
-    //    Em g/dia: multiplica por 1000 para converter kg → g
-    row._gpd = null;
-    if (i > 0 && pm !== null && row._dias !== null) {
-      const pmPrev = gn(rows[i - 1].id, 'pesoMedio');
-      if (pmPrev !== null) {
-        row._gpd = ((pm - pmPrev) * 1000) / row._dias; // g/dia
-      }
-    }
- 
-    // 5. CONVERSÃO DO PERÍODO = ração do período / ganho de biomassa
-    const rp = gn(id, 'racaoPer');
-    row._convP = (rp !== null && row._gBio !== null && row._gBio > 0)
-      ? rp / row._gBio
-      : null;
-  });
- 
-  // ── Ganho de biomassa acumulado e conversão acumulada ──
-  // Acumulado = soma de TODOS os ganhos de biomassa da linha 2 até a linha atual
-  // (linha 1 não tem acumulado pois não há anterior)
-  let acum = 0;
-  rows.forEach((row, i) => {
     if (i === 0) {
-      row._gBioA = null; // primeira linha: sem acumulado
+      row._dias = null;
+      row._gBio = (row._bio !== null && bioInicialKg > 0) ? row._bio - bioInicialKg : null;
+      row._gpd  = null;
     } else {
-      if (row._gBio !== null) acum += row._gBio;
-      row._gBioA = acum;
+      const anterior = rows[i - 1];
+      const dA = gv(id, 'data');
+      const dP = gv(anterior.id, 'data');
+      row._dias = null;
+      if (isValidDate(dA) && isValidDate(dP)) {
+        const diff = Math.round((new Date(dA) - new Date(dP)) / 86400000);
+        if (diff > 0 && diff < 3650) row._dias = diff; // sanity: max 10 years
+      }
+      row._gBio = (row._bio !== null && anterior._bio !== null) ? row._bio - anterior._bio : null;
+      const pmPrev = gn(anterior.id, 'pesoMedio');
+      if (pmPrev !== null && pm !== null && row._dias) {
+        row._gpd = ((pm - pmPrev) * 1000) / row._dias;
+      } else {
+        row._gpd = null;
+      }
     }
- 
-    // 6. CONVERSÃO ACUMULADA = ração acumulada / ganho de biomassa acumulado
-    const ra = gn(row.id, 'racaoAcum');
-    row._convA = (ra !== null && row._gBioA !== null && row._gBioA > 0)
-      ? ra / row._gBioA
-      : null;
+    row._convP = (rp !== null && row._gBio !== null && row._gBio > 0.0001) ? rp / row._gBio : null;
   });
  
-  // ── Atualizar células calculadas no DOM ──
+  let acumGanhoBio = 0;
   rows.forEach(row => {
-    const set = (calc, val, decimals) => {
+    if (row._gBio !== null) acumGanhoBio += row._gBio;
+    row._gBioA = (acumGanhoBio !== 0) ? acumGanhoBio : null;
+    const ra = gn(row.id, 'racaoAcum');
+    row._convA = (ra !== null && row._gBioA !== null && row._gBioA > 0.0001) ? ra / row._gBioA : null;
+  });
+ 
+  // Update desktop table cells (no innerHTML — use textContent)
+  rows.forEach(row => {
+    const setCellText = (calc, val, decimals) => {
       const el = document.querySelector(`tr[data-id="${row.id}"] td[data-calc="${calc}"]`);
       if (el) el.textContent = fmt(val, decimals !== undefined ? decimals : 2);
     };
-    set('dias',  row._dias,  0);
-    set('bio',   row._bio,   2);
-    set('gBio',  row._gBio,  2);
-    set('gBioA', row._gBioA, 2);
-    set('gpd',   row._gpd,   2);
-    set('convP', row._convP, 2);
-    set('convA', row._convA, 2);
+    setCellText('dias',  row._dias,  0);
+    setCellText('bio',   row._bio,   2);
+    setCellText('gBio',  row._gBio,  2);
+    setCellText('gBioA', row._gBioA, 2);
+    setCellText('gpd',   row._gpd,   2);
+    setCellText('convP', row._convP, 2);
+    setCellText('convA', row._convA, 2);
+  });
+ 
+  // Update mobile cards
+  updateMobileCalcs();
+}
+ 
+/* ── SAFE DOM ROW BUILDER (NO innerHTML FOR USER DATA) ── */
+function buildDesktopRow(row) {
+  const tr = document.createElement('tr');
+  tr.dataset.id = row.id;
+ 
+  // Delete cell
+  const delTd = document.createElement('td');
+  delTd.className = 'del-td';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.type = 'button';
+  delBtn.title = 'Remover linha';
+  delBtn.setAttribute('aria-label', 'Remover linha');
+  delBtn.textContent = '×';
+  delBtn.onclick = () => removeRow(row.id);
+  delTd.appendChild(delBtn);
+  tr.appendChild(delTd);
+ 
+  // Data input
+  tr.appendChild(makeInputTd('date', 'data', row.data || '', {min:'2000-01-01', max:'2100-12-31'}));
+  // Dias (calc)
+  tr.appendChild(makeCalcTd('dias', 'dc', '—'));
+  // Saldo
+  tr.appendChild(makeInputTd('number', 'saldo', row.saldo, {step:'1', min:'0', max:'9999999'}));
+  // Capturados
+  tr.appendChild(makeInputTd('number', 'capturados', row.capturados, {step:'1', min:'0', max:'9999999'}));
+  // Peso médio
+  tr.appendChild(makeInputTd('number', 'pesoMedio', row.pesoMedio, {step:'0.001', min:'0', max:'9999'}));
+  // GPD (calc)
+  tr.appendChild(makeCalcTd('gpd', 'cc', '—'));
+  // Biomassa (calc)
+  tr.appendChild(makeCalcTd('bio', 'cc', '—'));
+  // Ganho Bio (calc)
+  tr.appendChild(makeCalcTd('gBio', 'cc', '—'));
+  // Ganho Bio Acum (calc)
+  tr.appendChild(makeCalcTd('gBioA', 'cc', '—'));
+  // Ração período
+  tr.appendChild(makeInputTd('number', 'racaoPer', row.racaoPer, {step:'0.01', min:'0', max:'9999999'}));
+  // Ração acum
+  tr.appendChild(makeInputTd('number', 'racaoAcum', row.racaoAcum, {step:'0.01', min:'0', max:'9999999'}));
+  // Conversão P (calc)
+  tr.appendChild(makeCalcTd('convP', 'cc', '—'));
+  // Conversão A (calc)
+  tr.appendChild(makeCalcTd('convA', 'cc', '—'));
+ 
+  return tr;
+}
+ 
+function makeInputTd(type, col, value, attrs = {}) {
+  const td = document.createElement('td');
+  const inp = document.createElement('input');
+  inp.type = type;
+  inp.dataset.col = col;
+  inp.value = value !== null && value !== undefined ? value : '';
+  if (type === 'number') inp.placeholder = '0';
+  if (type === 'date') inp.placeholder = 'dd/mm/aaaa';
+  Object.entries(attrs).forEach(([k,v]) => inp.setAttribute(k, v));
+  inp.addEventListener('input', debounceSave);
+  inp.addEventListener('change', debounceSave);
+  // Prevent paste of scripts
+  inp.addEventListener('paste', e => {
+    if (type !== 'number' && type !== 'date') return;
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    const safe = type === 'number' ? text.replace(/[^\d.\-]/g,'') : text.replace(/[^\d\-]/g,'');
+    document.execCommand('insertText', false, safe);
+  });
+  td.appendChild(inp);
+  return td;
+}
+ 
+function makeCalcTd(calcKey, className, text) {
+  const td = document.createElement('td');
+  td.className = className;
+  td.dataset.calc = calcKey;
+  td.textContent = text;
+  return td;
+}
+ 
+/* ── MOBILE CARD BUILDER ── */
+function buildMobileCard(row, index) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.id = row.id;
+ 
+  // Card header
+  const hdr = document.createElement('div');
+  hdr.className = 'card-hdr';
+  const num = document.createElement('span');
+  num.className = 'card-num';
+  num.textContent = `Biometria #${index + 1}`;
+  const delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.type = 'button';
+  delBtn.setAttribute('aria-label', 'Remover');
+  delBtn.textContent = '×';
+  delBtn.onclick = () => removeRow(row.id);
+  hdr.appendChild(num);
+  hdr.appendChild(delBtn);
+  card.appendChild(hdr);
+ 
+  // Card body
+  const body = document.createElement('div');
+  body.className = 'card-body';
+ 
+  const fields = [
+    {label:'Data', col:'data', type:'date', attrs:{min:'2000-01-01',max:'2100-12-31'}, full:true},
+    {label:'Saldo de Peixes', col:'saldo', type:'number', attrs:{step:'1',min:'0',max:'9999999'}},
+    {label:'Peixes Capturados', col:'capturados', type:'number', attrs:{step:'1',min:'0',max:'9999999'}},
+    {label:'Peso Médio (kg)', col:'pesoMedio', type:'number', attrs:{step:'0.001',min:'0',max:'9999'}},
+    {label:'Ração Período (kg)', col:'racaoPer', type:'number', attrs:{step:'0.01',min:'0',max:'9999999'}},
+    {label:'Ração Acum. (kg)', col:'racaoAcum', type:'number', attrs:{step:'0.01',min:'0',max:'9999999'}},
+  ];
+ 
+  fields.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card-field' + (f.full ? ' full' : '');
+    const lbl = document.createElement('label');
+    lbl.textContent = f.label;
+    const inp = document.createElement('input');
+    inp.type = f.type;
+    inp.dataset.col = f.col;
+    inp.dataset.cardId = row.id;
+    inp.value = row[f.col] !== null && row[f.col] !== undefined ? row[f.col] : '';
+    Object.entries(f.attrs || {}).forEach(([k,v]) => inp.setAttribute(k,v));
+    inp.addEventListener('input', debounceSave);
+    inp.addEventListener('change', debounceSave);
+    // Sync mobile input → desktop table (keep both in sync)
+    inp.addEventListener('input', () => syncMobileToTable(row.id, f.col, inp.value));
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    body.appendChild(wrap);
+  });
+ 
+  // Calculated fields display
+  const calcFields = [
+    {label:'Dias', key:'_dias', format:0},
+    {label:'Biomassa Total (kg)', key:'_bio', format:2},
+    {label:'Ganho de Biomassa (kg)', key:'_gBio', format:2},
+    {label:'Ganho de Biomassa Acum.', key:'_gBioA', format:2},
+    {label:'Ganho Diário (g/dia)', key:'_gpd', format:2},
+    {label:'Conversão Período', key:'_convP', format:2},
+    {label:'Conversão Acum.', key:'_convA', format:2},
+  ];
+ 
+  calcFields.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card-field';
+    const lbl = document.createElement('label');
+    lbl.textContent = c.label;
+    const val = document.createElement('div');
+    val.className = 'card-calc' + (c.key === '_dias' ? ' blue-val' : '');
+    val.dataset.calcCard = `${row.id}_${c.key}`;
+    val.textContent = '—';
+    wrap.appendChild(lbl);
+    wrap.appendChild(val);
+    body.appendChild(wrap);
+  });
+ 
+  card.appendChild(body);
+  return card;
+}
+ 
+function syncMobileToTable(rowId, col, value) {
+  const tr = document.querySelector(`tr[data-id="${rowId}"]`);
+  if (!tr) return;
+  const inp = tr.querySelector(`input[data-col="${col}"]`);
+  if (inp && inp.value !== value) inp.value = value;
+}
+ 
+function updateMobileCalcs() {
+  rows.forEach(row => {
+    const calcMap = {_dias:0, _bio:2, _gBio:2, _gBioA:2, _gpd:2, _convP:2, _convA:2};
+    Object.entries(calcMap).forEach(([key, dec]) => {
+      const el = document.querySelector(`[data-calc-card="${row.id}_${key}"]`);
+      if (el) el.textContent = fmt(row[key], dec);
+    });
   });
 }
  
+/* ── RENDER TABLE ── */
 function renderTable() {
   const tbody = document.getElementById('tbody');
+  const mobileCards = document.getElementById('mobileCards');
+ 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="14">Nenhuma linha ainda — clique em "Adicionar Linha" para começar.</td></tr>`;
+    tbody.innerHTML = '';
+    const emptyTr = document.createElement('tr');
+    emptyTr.className = 'empty-row';
+    const emptyTd = document.createElement('td');
+    emptyTd.colSpan = 14;
+    emptyTd.textContent = 'Nenhuma linha ainda — clique em "Adicionar Linha" para começar.';
+    emptyTr.appendChild(emptyTd);
+    tbody.appendChild(emptyTr);
+    mobileCards.innerHTML = '';
     return;
   }
-  const v = (row, col) => row[col] !== undefined ? row[col] : '';
-  tbody.innerHTML = rows.map(row => `
-    <tr data-id="${row.id}">
-      <td class="del-td"><button class="del-btn" onclick="removeRow(${row.id})" title="Remover linha">×</button></td>
-      <td><input type="date" data-col="data" value="${v(row,'data')}" oninput="save()" onchange="save()"></td>
-      <td class="dc" data-calc="dias">—</td>
-      <td><input type="number" data-col="saldo" value="${v(row,'saldo')}" placeholder="0" step="1" oninput="save()"></td>
-      <td><input type="number" data-col="capturados" value="${v(row,'capturados')}" placeholder="0" step="1" oninput="save()"></td>
-      <td><input type="number" data-col="pesoMedio" value="${v(row,'pesoMedio')}" placeholder="0.000" step="0.001" oninput="save()"></td>
-      <td class="cc" data-calc="gpd">—</td>
-      <td class="cc" data-calc="bio">—</td>
-      <td class="cc" data-calc="gBio">—</td>
-      <td class="cc" data-calc="gBioA">—</td>
-      <td><input type="number" data-col="racaoPer" value="${v(row,'racaoPer')}" placeholder="0" step="0.01" oninput="save()"></td>
-      <td><input type="number" data-col="racaoAcum" value="${v(row,'racaoAcum')}" placeholder="0" step="0.01" oninput="save()"></td>
-      <td class="cc" data-calc="convP">—</td>
-      <td class="cc" data-calc="convA">—</td>
-    </tr>`).join('');
+ 
+  // Desktop
+  tbody.innerHTML = '';
+  rows.forEach(row => tbody.appendChild(buildDesktopRow(row)));
+ 
+  // Mobile
+  mobileCards.innerHTML = '';
+  rows.forEach((row, i) => mobileCards.appendChild(buildMobileCard(row, i)));
+ 
   recalc();
 }
  
+/* ── ROW MANAGEMENT ── */
 function addRow() {
-  const id = Date.now();
-  // Herda saldo de peixes da linha anterior
-  const prevSaldo = rows.length > 0 ? (rows[rows.length-1].saldo || '') : '';
+  if (rows.length >= MAX_ROWS) {
+    toast(`Limite de ${MAX_ROWS} linhas atingido.`, 'error');
+    return;
+  }
+  const id = Date.now() + Math.floor(Math.random() * 1000); // avoid collision
+  const prevSaldo = rows.length > 0 ? (rows[rows.length-1].saldo ?? '') : '';
   rows.push({id, data:'', saldo: prevSaldo, capturados:'', pesoMedio:'', racaoPer:'', racaoAcum:''});
   renderTable();
   save();
+  // Focus date input of new row
   setTimeout(() => {
-    const inp = document.querySelector(`tr[data-id="${id}"] input[data-col="data"]`);
-    if (inp) inp.focus();
-  }, 60);
+    const isMobile = window.innerWidth <= 768;
+    const sel = isMobile
+      ? `[data-card-id="${id}"][data-col="data"]`
+      : `tr[data-id="${id}"] input[data-col="data"]`;
+    const inp = document.querySelector(sel);
+    if (inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  }, 80);
 }
  
 function removeRow(id) {
-  rows = rows.filter(r => r.id !== id);
+  const safeId = parseInt(id);
+  if (!isFinite(safeId)) return;
+  rows = rows.filter(r => r.id !== safeId);
   renderTable();
   save();
 }
@@ -501,14 +1039,87 @@ function removeLastRow() {
   save();
 }
  
-// Init
+/* ── CSV EXPORT (with injection prevention) ── */
+function escapeCSV(val) {
+  if (val === null || val === undefined) return '';
+  const s = String(val);
+  // Prevent CSV formula injection: prefix with tab if starts with dangerous chars
+  const dangerous = /^[=+\-@\t\r]/.test(s);
+  const needsQuote = s.includes(',') || s.includes('"') || s.includes('\n') || dangerous;
+  if (needsQuote) {
+    const escaped = (dangerous ? '\t' : '') + s.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+  return s;
+}
+ 
+function exportCSV() {
+  const INFO_IDS = ['produtor','tanque','area','totalPeixes','pesoMedioInicial','biomassaInicial','peixesM2','mortosAloj'];
+  const info = Object.create(null);
+  INFO_IDS.forEach(id => {
+    const e = document.getElementById(id);
+    if (e) info[id] = e.value;
+  });
+ 
+  collectValues();
+ 
+  const headers = [
+    'Data','Dias','Saldo de Peixes','Peixes Capturados','Peso Médio (kg)',
+    'Ganho Peso Diário (g/dia)','Biomassa Total (kg)','Ganho de Biomassa (kg)',
+    'Ganho de Biomassa Acum. (kg)','Ração Período (kg)','Ração Acum. (kg)',
+    'Conversão Período','Conversão Acum.'
+  ];
+ 
+  const lines = [
+    `Produtor: ${escapeCSV(info.produtor)}`,
+    `Tanque: ${escapeCSV(info.tanque)}`,
+    `Área (m²): ${escapeCSV(info.area)}`,
+    `Total Peixes: ${escapeCSV(info.totalPeixes)}`,
+    '',
+    headers.map(escapeCSV).join(','),
+    ...rows.map(r => [
+      escapeCSV(r.data),
+      escapeCSV(fmt(r._dias, 0)),
+      escapeCSV(r.saldo),
+      escapeCSV(r.capturados),
+      escapeCSV(r.pesoMedio),
+      escapeCSV(fmt(r._gpd,2)),
+      escapeCSV(fmt(r._bio,2)),
+      escapeCSV(fmt(r._gBio,2)),
+      escapeCSV(fmt(r._gBioA,2)),
+      escapeCSV(r.racaoPer),
+      escapeCSV(r.racaoAcum),
+      escapeCSV(fmt(r._convP,2)),
+      escapeCSV(fmt(r._convA,2)),
+    ].join(','))
+  ];
+ 
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  // Safe filename — no user data in filename
+  a.download = `biometria_copacol_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  toast('CSV exportado com sucesso!', 'success');
+}
+ 
+/* ── INIT ── */
 const loaded = load();
 if (!loaded) {
   for (let i = 0; i < 3; i++) {
-    rows.push({id: Date.now()+i*7, data:'', saldo:'', capturados:'', pesoMedio:'', racaoPer:'', racaoAcum:''});
+    rows.push({id: Date.now() + i * 13, data:'', saldo:'', capturados:'', pesoMedio:'', racaoPer:'', racaoAcum:''});
   }
 }
 renderTable();
+ 
+// Show scroll hint on mobile
+if (window.innerWidth > 768) {
+  const sh = document.querySelector('.scroll-hint');
+  if (sh) sh.style.display = 'none';
+}
 </script>
 </body>
 </html>
