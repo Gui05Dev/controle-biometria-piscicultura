@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Biometria — Copacol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+ 
+body{
+  font-family:'DM Sans',sans-serif;
+  background:#f4f6f3;
+  min-height:100vh;
+  padding:28px 20px 48px;
+  color:#1c2b1c;
+}
+ 
+.wrap{max-width:1760px;margin:0 auto;display:flex;flex-direction:column;gap:0}
+ 
+/* ── HEADER ── */
+.hdr{
+  background:linear-gradient(135deg,#1a3d1a 0%,#2d6b2d 100%);
+  border-radius:14px 14px 0 0;
+  padding:22px 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.hdr-left{display:flex;align-items:center;gap:18px}
+.hdr-logo{
+  font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;
+  color:#fff;letter-spacing:.5px;
+  background:rgba(255,255,255,.12);
+  padding:6px 14px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.2);
+}
+.hdr-title{
+  font-size:17px;font-weight:500;color:rgba(255,255,255,.92);
+  letter-spacing:.3px;
+}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.save-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;color:rgba(255,255,255,.82);font-weight:500;
+}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#7ee87e;flex-shrink:0;
+  transition:background .3s;
+}
+.dot.saving{background:#fbbf24}
+ 
+/* ── INFO PANEL ── */
+.info-panel{
+  background:#fff;
+  border:1px solid #dde8dd;border-top:none;
+  padding:20px 32px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:14px 22px;
+}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{
+  font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.9px;
+  color:#6b8a6b;
+}
+.f input{
+  background:#f7faf7;
+  border:1.5px solid #c8ddc8;
+  border-radius:8px;
+  padding:7px 11px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;
+  color:#1c2b1c;
+  transition:border-color .15s,background .15s;
+}
+.f input:focus{outline:none;border-color:#2d6b2d;background:#fff}
+ 
+/* ── SECTION BAR ── */
+.sec-bar{
+  background:#2d6b2d;
+  border-left:1px solid #dde8dd;border-right:1px solid #dde8dd;
+  padding:9px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sec-bar span{
+  font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:rgba(255,255,255,.85);
+}
+.legend{display:flex;align-items:center;gap:14px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.7)}
+.leg-dot{width:8px;height:8px;border-radius:2px}
+.leg-dot.green{background:#86efb0}
+.leg-dot.blue{background:#93c5fd}
+ 
+/* ── TABLE ── */
+.tbl-wrap{
+  overflow-x:auto;
+  background:#fff;
+  border:1px solid #dde8dd;border-top:none;
+}
+table{
+  width:100%;border-collapse:collapse;
+  font-size:12px;min-width:1560px;
+}
+thead tr{background:none}
+th{
+  background:#1e4d1e;
+  color:rgba(255,255,255,.88);
+  font-family:'DM Sans',sans-serif;
+  font-size:10px;font-weight:600;
+  letter-spacing:.7px;text-transform:uppercase;
+  text-align:center;
+  padding:10px 6px;
+  border-right:1px solid rgba(255,255,255,.1);
+  white-space:normal;line-height:1.4;vertical-align:bottom;
+}
+th:first-child{border-radius:0}
+th .auto{
+  display:block;font-size:9px;
+  color:rgba(255,255,255,.45);
+  font-weight:400;text-transform:none;
+  letter-spacing:0;margin-top:3px;
+}
+ 
+/* rows */
+tbody tr{transition:background .12s}
+tbody tr:nth-child(even) td{background:#f8fbf8}
+tbody tr:nth-child(odd) td{background:#fff}
+tbody tr:hover td{background:#edf5ed!important}
+ 
+td{
+  border-right:1px solid #e8f0e8;
+  border-bottom:1px solid #e8f0e8;
+  padding:4px 6px;
+  text-align:center;vertical-align:middle;
+}
+ 
+/* editable inputs */
+td input[type=number],td input[type=date]{
+  background:transparent;
+  border:none;border-bottom:1.5px solid transparent;
+  width:100%;min-width:62px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:500;
+  color:#1c2b1c;text-align:center;
+  padding:3px 2px;
+  transition:border-color .15s,background .12s;
+  border-radius:0;
+}
+td input[type=number]:focus,td input[type=date]:focus{
+  outline:none;
+  border-bottom-color:#2d6b2d;
+  background:rgba(45,107,45,.06);
+}
+td input[type=date]{min-width:110px;font-size:11px}
+ 
+/* calculated — green */
+td.cc{
+  background:#f0faf3!important;
+  font-weight:600;color:#1a6b3a;
+  font-size:12px;
+}
+tbody tr:hover td.cc{background:#d9f2e4!important}
+ 
+/* calculated — blue (days) */
+td.dc{
+  background:#eff6ff!important;
+  font-weight:700;color:#1d4ed8;
+  font-size:13px;letter-spacing:-.3px;
+}
+tbody tr:hover td.dc{background:#dbeafe!important}
+ 
+/* remove row btn */
+td.del-td{padding:3px 4px;width:32px}
+.del-btn{
+  background:none;border:none;cursor:pointer;
+  width:24px;height:24px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  color:#c8c8c8;font-size:15px;font-weight:700;
+  transition:background .12s,color .12s;
+  padding:0;
+}
+.del-btn:hover{background:#fee2e2;color:#dc2626}
+ 
+/* empty row */
+.empty-row td{
+  color:#94a394;font-style:italic;
+  font-size:12px;padding:28px;
+  border:none;
+}
+ 
+/* ── ACTIONS BAR ── */
+.actions{
+  background:#fff;
+  border:1px solid #dde8dd;border-top:none;
+  border-radius:0 0 14px 14px;
+  padding:14px 32px;
+  display:flex;align-items:center;gap:10px;
+}
+.btn{
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  padding:9px 22px;border:none;
+  border-radius:9px;cursor:pointer;
+  transition:all .15s;
+  display:flex;align-items:center;gap:7px;
+  letter-spacing:.1px;
+}
+.btn-add{background:#2d6b2d;color:#fff}
+.btn-add:hover{background:#1e4d1e;transform:translateY(-1px)}
+.btn-add:active{transform:translateY(0)}
+ 
+.btn-rem{
+  background:#fff;color:#dc2626;
+  border:1.5px solid #fca5a5;
+}
+.btn-rem:hover{background:#fee2e2;border-color:#f87171;transform:translateY(-1px)}
+.btn-rem:active{transform:translateY(0)}
+ 
+.actions-hint{
+  margin-left:auto;font-size:11px;color:#9aaa9a;font-weight:500;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+ 
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-logo">Copacol</div>
+      <div class="hdr-title">Controle de Biometria</div>
+    </div>
+    <div class="hdr-right">
+      <div class="save-pill">
+        <span class="dot" id="dot"></span>
+        <span id="saveText">Salvo</span>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- INFO PANEL -->
+  <div class="info-panel">
+    <div class="f"><label>Produtor</label><input type="text" id="produtor" placeholder="Nome do produtor" oninput="save()"></div>
+    <div class="f"><label>Nº Tanque / Alojamento</label><input type="text" id="tanque" placeholder="Ex: 01 / 081265" oninput="save()"></div>
+    <div class="f"><label>Área (m²)</label><input type="number" id="area" placeholder="Ex: 7840" step="0.01" oninput="save()"></div>
+    <div class="f"><label>Nº Total de Peixes</label><input type="number" id="totalPeixes" placeholder="Ex: 71355" oninput="save()"></div>
+    <div class="f"><label>Peso Médio Inicial (kg)</label><input type="number" id="pesoMedioInicial" placeholder="Ex: 0.044" step="0.001" oninput="save()"></div>
+    <div class="f"><label>Biomassa Inicial (kg)</label><input type="number" id="biomassaInicial" placeholder="Ex: 3143.48" step="0.01" oninput="save()"></div>
+    <div class="f"><label>Peixes / m²</label><input type="number" id="peixesM2" placeholder="Ex: 9.10" step="0.01" oninput="save()"></div>
+    <div class="f"><label>Mortos Aloj.</label><input type="number" id="mortosAloj" placeholder="Ex: 42" oninput="save()"></div>
+  </div>
+ 
+  <!-- SECTION BAR -->
+  <div class="sec-bar">
+    <span>Biometria Semanal &nbsp;·&nbsp; Consumo de Ração e Conversão</span>
+    <div class="legend">
+      <div class="leg-item"><span class="leg-dot green"></span>Calculado automático</div>
+      <div class="leg-item"><span class="leg-dot blue"></span>Dias entre pesagens</div>
+    </div>
+  </div>
+ 
+  <!-- TABLE -->
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px"></th>
+          <th style="width:112px">Data</th>
+          <th style="width:48px">Dias<span class="auto">⚙ auto</span></th>
+          <th style="width:78px">Saldo de Peixes</th>
+          <th style="width:84px">Peixes Capturados</th>
+          <th style="width:78px">Peso Médio (kg)</th>
+          <th style="width:84px">Ganho de Peso Diário (g/dia)<span class="auto">⚙ auto</span></th>
+          <th style="width:94px">Biomassa Total (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:94px">Ganho de Biomassa (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:100px">Ganho de Biomassa Acum. (kg)<span class="auto">⚙ auto</span></th>
+          <th style="width:88px">Ração do Período (kg)</th>
+          <th style="width:82px">Ração Acum. (kg)</th>
+          <th style="width:80px">Conversão do Período<span class="auto">⚙ auto</span></th>
+          <th style="width:80px">Conversão Acum.<span class="auto">⚙ auto</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+ 
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-add" onclick="addRow()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Adicionar Linha
+    </button>
+    <button class="btn btn-rem" onclick="removeLastRow()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Remover Última
+    </button>
+    <span class="actions-hint">Clique em × na linha para remover individualmente</span>
+  </div>
+ 
+</div>
+ 
+<script>
+const KEY = 'copacol_bio_v3';
+let rows = [];
+let saveTimer;
+ 
+function flashSave() {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('saveText');
+  dot.classList.add('saving');
+  txt.textContent = 'Salvando…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    dot.classList.remove('saving');
+    txt.textContent = 'Salvo';
+  }, 700);
+}
+ 
+function save() {
+  rows.forEach(row => {
+    ['data','saldo','capturados','pesoMedio','racaoPer','racaoAcum'].forEach(col => {
+      const el = document.querySelector(`tr[data-id="${row.id}"] input[data-col="${col}"]`);
+      if (el) row[col] = el.value;
+    });
+  });
+  const INFO = ['produtor','tanque','area','totalPeixes','pesoMedioInicial','biomassaInicial','peixesM2','mortosAloj'];
+  const info = {};
+  INFO.forEach(id => { const e = document.getElementById(id); if(e) info[id]=e.value; });
+  try { localStorage.setItem(KEY, JSON.stringify({info,rows})); flashSave(); } catch(e){}
+  recalc();
+}
+ 
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.info) Object.entries(d.info).forEach(([k,v])=>{ const e=document.getElementById(k); if(e) e.value=v; });
+    if (Array.isArray(d.rows) && d.rows.length > 0) { rows = d.rows; return true; }
+  } catch(e){}
+  return false;
+}
+ 
+// Lê valor do input de uma célula (DOM primeiro, fallback no array)
+function gv(id, col) {
+  const el = document.querySelector(`tr[data-id="${id}"] input[data-col="${col}"]`);
+  if (el) return el.value;
+  const r = rows.find(r => String(r.id) === String(id));
+  return r ? (r[col] || '') : '';
+}
+// Lê valor como número (null se vazio/inválido)
+function gn(id, col) {
+  const v = parseFloat(gv(id, col));
+  return isNaN(v) ? null : v;
+}
+// Formata número para exibição
+function fmt(v, d = 2) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(d);
+}
+ 
+function recalc() {
+  // ── Passagem única: calcular tudo em ordem, usando _bio já resolvido da linha anterior ──
+  rows.forEach((row, i) => {
+    const id  = row.id;
+    const cap = gn(id, 'capturados');   // peixes capturados
+    const pm  = gn(id, 'pesoMedio');    // peso médio (kg)
+ 
+    // 1. BIOMASSA TOTAL = peixes capturados / peso médio
+    //    Ex: 61780 capturados, peso médio 0.75 → NÃO faz sentido dividir pela contagem
+    //    Fórmula correta conforme tabela: capturados * peso_médio = biomassa total
+    //    61780 * 0.75 = 46335 kg
+    row._bio = (cap !== null && pm !== null) ? cap * pm : null;
+ 
+    // 2. DIAS = data desta linha − data da linha anterior
+    row._dias = null;
+    if (i > 0) {
+      const dA = gv(id, 'data');
+      const dP = gv(rows[i - 1].id, 'data');
+      if (dA && dP) {
+        const diff = Math.round((new Date(dA) - new Date(dP)) / 86400000);
+        if (diff > 0) row._dias = diff;
+      }
+    }
+ 
+    // 3. GANHO DE BIOMASSA = biomassa total desta linha − biomassa total da linha anterior
+    row._gBio = null;
+    if (i > 0 && row._bio !== null && rows[i - 1]._bio !== null) {
+      row._gBio = row._bio - rows[i - 1]._bio;
+    }
+ 
+    // 4. GANHO DE PESO DIÁRIO = (peso médio desta linha − peso médio anterior) / dias
+    //    Em g/dia: multiplica por 1000 para converter kg → g
+    row._gpd = null;
+    if (i > 0 && pm !== null && row._dias !== null) {
+      const pmPrev = gn(rows[i - 1].id, 'pesoMedio');
+      if (pmPrev !== null) {
+        row._gpd = ((pm - pmPrev) * 1000) / row._dias; // g/dia
+      }
+    }
+ 
+    // 5. CONVERSÃO DO PERÍODO = ração do período / ganho de biomassa
+    const rp = gn(id, 'racaoPer');
+    row._convP = (rp !== null && row._gBio !== null && row._gBio > 0)
+      ? rp / row._gBio
+      : null;
+  });
+ 
+  // ── Ganho de biomassa acumulado e conversão acumulada ──
+  // Acumulado = soma de TODOS os ganhos de biomassa da linha 2 até a linha atual
+  // (linha 1 não tem acumulado pois não há anterior)
+  let acum = 0;
+  rows.forEach((row, i) => {
+    if (i === 0) {
+      row._gBioA = null; // primeira linha: sem acumulado
+    } else {
+      if (row._gBio !== null) acum += row._gBio;
+      row._gBioA = acum;
+    }
+ 
+    // 6. CONVERSÃO ACUMULADA = ração acumulada / ganho de biomassa acumulado
+    const ra = gn(row.id, 'racaoAcum');
+    row._convA = (ra !== null && row._gBioA !== null && row._gBioA > 0)
+      ? ra / row._gBioA
+      : null;
+  });
+ 
+  // ── Atualizar células calculadas no DOM ──
+  rows.forEach(row => {
+    const set = (calc, val, decimals) => {
+      const el = document.querySelector(`tr[data-id="${row.id}"] td[data-calc="${calc}"]`);
+      if (el) el.textContent = fmt(val, decimals !== undefined ? decimals : 2);
+    };
+    set('dias',  row._dias,  0);
+    set('bio',   row._bio,   2);
+    set('gBio',  row._gBio,  2);
+    set('gBioA', row._gBioA, 2);
+    set('gpd',   row._gpd,   2);
+    set('convP', row._convP, 2);
+    set('convA', row._convA, 2);
+  });
+}
+ 
+function renderTable() {
+  const tbody = document.getElementById('tbody');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="14">Nenhuma linha ainda — clique em "Adicionar Linha" para começar.</td></tr>`;
+    return;
+  }
+  const v = (row, col) => row[col] !== undefined ? row[col] : '';
+  tbody.innerHTML = rows.map(row => `
+    <tr data-id="${row.id}">
+      <td class="del-td"><button class="del-btn" onclick="removeRow(${row.id})" title="Remover linha">×</button></td>
+      <td><input type="date" data-col="data" value="${v(row,'data')}" oninput="save()" onchange="save()"></td>
+      <td class="dc" data-calc="dias">—</td>
+      <td><input type="number" data-col="saldo" value="${v(row,'saldo')}" placeholder="0" step="1" oninput="save()"></td>
+      <td><input type="number" data-col="capturados" value="${v(row,'capturados')}" placeholder="0" step="1" oninput="save()"></td>
+      <td><input type="number" data-col="pesoMedio" value="${v(row,'pesoMedio')}" placeholder="0.000" step="0.001" oninput="save()"></td>
+      <td class="cc" data-calc="gpd">—</td>
+      <td class="cc" data-calc="bio">—</td>
+      <td class="cc" data-calc="gBio">—</td>
+      <td class="cc" data-calc="gBioA">—</td>
+      <td><input type="number" data-col="racaoPer" value="${v(row,'racaoPer')}" placeholder="0" step="0.01" oninput="save()"></td>
+      <td><input type="number" data-col="racaoAcum" value="${v(row,'racaoAcum')}" placeholder="0" step="0.01" oninput="save()"></td>
+      <td class="cc" data-calc="convP">—</td>
+      <td class="cc" data-calc="convA">—</td>
+    </tr>`).join('');
+  recalc();
+}
+ 
+function addRow() {
+  const id = Date.now();
+  // Herda saldo de peixes da linha anterior
+  const prevSaldo = rows.length > 0 ? (rows[rows.length-1].saldo || '') : '';
+  rows.push({id, data:'', saldo: prevSaldo, capturados:'', pesoMedio:'', racaoPer:'', racaoAcum:''});
+  renderTable();
+  save();
+  setTimeout(() => {
+    const inp = document.querySelector(`tr[data-id="${id}"] input[data-col="data"]`);
+    if (inp) inp.focus();
+  }, 60);
+}
+ 
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  renderTable();
+  save();
+}
+ 
+function removeLastRow() {
+  if (rows.length === 0) return;
+  rows.pop();
+  renderTable();
+  save();
+}
+ 
+// Init
+const loaded = load();
+if (!loaded) {
+  for (let i = 0; i < 3; i++) {
+    rows.push({id: Date.now()+i*7, data:'', saldo:'', capturados:'', pesoMedio:'', racaoPer:'', racaoAcum:''});
+  }
+}
+renderTable();
+</script>
+</body>
+</html>
