@@ -1,0 +1,4 @@
+.vscode/
+*.log
+NTUSER.DAT*
+node_modules/
