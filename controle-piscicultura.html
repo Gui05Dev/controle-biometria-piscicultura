@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copacol — Controle de Biometria</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div class="pagina">
+
+  <!-- ================= CABEÇALHO ================= -->
+  <div class="marca">
+    <span class="logo"><span class="peixe">🐟</span> Copacol</span>
+    <span class="titulo">CONTROLE DE BIOMETRIA</span>
+    <span class="form">FRP-1209 REV. 05</span>
+  </div>
+
+  <!-- ================= ABAS ================= -->
+  <div class="abas">
+    <button class="aba ativa" data-aba="biometria" onclick="mostrarAba('biometria')">📋 Biometria</button>
+    <button class="aba" data-aba="painel" onclick="mostrarAba('painel')">📊 Painel &amp; Gráficos</button>
+  </div>
+
+  <!-- ============================================================
+                       ABA 1 — BIOMETRIA
+  ============================================================= -->
+  <section id="aba-biometria" class="aba-conteudo ativa">
+
+    <div class="nav-grid">
+      <div class="nav-field"><label>Produtor</label><input id="produtor" type="text" placeholder="Nome do produtor"></div>
+      <div class="nav-field"><label>Nº Tanque</label><input id="tanque" type="text" placeholder="01"></div>
+      <div class="nav-field"><label>Data Alojamento</label><input id="dataAloj" type="date"></div>
+      <div class="nav-field"><label>Área (m²)</label><input id="area" type="number" min="0" max="1000000" step="0.01" placeholder="0"></div>
+      <div class="nav-field"><label>Nº Total Peixes</label><input id="totalPeixes" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
+      <div class="nav-field"><label>Peso Médio Inicial (g)</label><input id="pesoInicial" type="number" min="0" max="50000" step="0.1" placeholder="44"></div>
+      <div class="nav-field"><label>Biomassa (kg)</label><input id="biomassaInicial" type="text" readonly></div>
+      <div class="nav-field"><label>Peixes / m²</label><input id="peixesM2" type="text" readonly></div>
+      <div class="nav-field"><label>Mortos Aloj.</label><input id="mortosAloj" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
+    </div>
+
+    <div class="conteudo">
+      <p class="dica">Preencha somente <b>Data, Saldo de Peixes, Peixes Capturados, Peso Médio</b> e <b>Ração do Período</b>. As colunas coloridas são calculadas automaticamente e tudo fica salvo no navegador.</p>
+
+      <div class="tabela-wrap">
+        <table id="tabela">
+          <thead>
+            <tr class="grupos">
+              <th class="g0"></th>
+              <th class="g1" colspan="7">INFORMAÇÕES DE BIOMETRIA — SEMANAL</th>
+              <th class="g2" colspan="4">CONSUMO DE RAÇÃO E CONVERSÃO</th>
+              <th class="g0"></th>
+            </tr>
+            <tr class="colunas">
+              <th>Data</th>
+              <th>Saldo de<br>Peixes</th>
+              <th>Peixes<br>Capturados</th>
+              <th>Peso Médio<br>(g)</th>
+              <th>Ganho peso<br>diário (g)</th>
+              <th>Biomassa<br>Total (kg)</th>
+              <th>Ganho de<br>Biomassa (kg)</th>
+              <th>Ganho Biomassa<br>Acum. (kg)</th>
+              <th>Ração do<br>Período (kg)</th>
+              <th>Conversão<br>Período</th>
+              <th>Ração Acum.<br>(kg)</th>
+              <th>Conversão<br>Acum.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="corpo"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="acoes">
+      <button class="verde" onclick="adicionarLinha()">＋ Nova Biometria</button>
+      <button class="azul-escuro" onclick="salvarBackup()">💾 Salvar Backup</button>
+      <button class="azul-escuro" onclick="document.getElementById('arquivoBackup').click()">📂 Abrir Backup</button>
+      <button onclick="exportarCSV()">⬇ Exportar CSV (Excel)</button>
+      <button class="cinza" onclick="window.print()">🖨 Imprimir / PDF</button>
+      <button class="vermelho-acao" onclick="limparTudo()">🗑 Limpar Tudo</button>
+      <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none" onchange="abrirBackup(this)">
+    </div>
+
+  </section>
+
+  <!-- ============================================================
+                  ABA 2 — PAINEL & GRÁFICOS
+  ============================================================= -->
+  <section id="aba-painel" class="aba-conteudo">
+    <div class="conteudo">
+
+      <div class="indicadores">
+        <div class="ind"><div class="ind-rotulo">Dias de Cultivo</div><div class="ind-valor" id="iDias">—</div></div>
+        <div class="ind"><div class="ind-rotulo">Peso Médio Atual</div><div class="ind-valor" id="iPeso">—</div></div>
+        <div class="ind"><div class="ind-rotulo">Biomassa Atual</div><div class="ind-valor" id="iBio">—</div></div>
+        <div class="ind"><div class="ind-rotulo">Ganho de Biomassa</div><div class="ind-valor" id="iGanho">—</div></div>
+        <div class="ind"><div class="ind-rotulo">Ração Total</div><div class="ind-valor" id="iRacao">—</div></div>
+        <div class="ind destaque"><div class="ind-rotulo">Conversão Acum.</div><div class="ind-valor" id="iConv">—</div></div>
+      </div>
+
+      <div class="painel-grid">
+        <div class="painel-card">
+          <div class="painel-titulo">📈 Curva de Crescimento — Peso Médio (g)</div>
+          <div id="g-peso" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">🐟 Biomassa Total (kg)</div>
+          <div id="g-bio" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">
+            🎯 Conversão Alimentar
+            <span class="legenda"><span class="ponto" style="background:#1289b8"></span>Acumulada
+            <span class="ponto" style="background:#e0982a"></span>Período</span>
+          </div>
+          <div id="g-conv" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">⚡ Ganho de Peso Diário (g)</div>
+          <div id="g-gpd" class="grafico-box"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>Planilha automática de biometria • dados salvos localmente no seu navegador</footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
