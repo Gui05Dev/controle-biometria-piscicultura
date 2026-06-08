@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a5a7d">
 <title>Copacol — Controle de Biometria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
@@ -13,7 +17,10 @@
   <div class="marca">
     <span class="logo"><span class="peixe">🐟</span> Copacol</span>
     <span class="titulo">CONTROLE DE BIOMETRIA</span>
-    <span class="form">FRP-1209 REV. 05</span>
+    <span class="marca-dir">
+      <span class="sync-chip off" id="syncChip" onclick="abrirConfigSync()" title="Sincronizar com Google Planilhas">🔌 Conectar planilha</span>
+      <span class="form">FRP-1209 REV. 05</span>
+    </span>
   </div>
 
   <!-- ================= ABAS ================= -->
@@ -31,9 +38,9 @@
       <div class="nav-field"><label>Produtor</label><input id="produtor" type="text" placeholder="Nome do produtor"></div>
       <div class="nav-field"><label>Nº Tanque</label><input id="tanque" type="text" placeholder="01"></div>
       <div class="nav-field"><label>Data Alojamento</label><input id="dataAloj" type="date"></div>
-      <div class="nav-field"><label>Área (m²)</label><input id="area" type="number" min="0" max="1000000" step="0.01" placeholder="0"></div>
+      <div class="nav-field"><label>Área (m²)</label><input id="area" type="number" min="0" max="1000000" step="any" placeholder="0"></div>
       <div class="nav-field"><label>Nº Total Peixes</label><input id="totalPeixes" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
-      <div class="nav-field"><label>Peso Médio Inicial (g)</label><input id="pesoInicial" type="number" min="0" max="50000" step="0.1" placeholder="44"></div>
+      <div class="nav-field"><label>Peso Médio Inicial (g)</label><input id="pesoInicial" type="number" min="0" max="50000" step="any" placeholder="44"></div>
       <div class="nav-field"><label>Biomassa (kg)</label><input id="biomassaInicial" type="text" readonly></div>
       <div class="nav-field"><label>Peixes / m²</label><input id="peixesM2" type="text" readonly></div>
       <div class="nav-field"><label>Mortos Aloj.</label><input id="mortosAloj" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
@@ -72,11 +79,12 @@
       </div>
     </div>
 
-    <div class="acoes">
-      <button class="verde" onclick="adicionarLinha()">＋ Nova Biometria</button>
+    <div class="acoes acoes-primaria">
+      <button class="verde grande" onclick="adicionarLinha()">＋ Nova Biometria</button>
+    </div>
+    <div class="acoes-sec">
       <button class="azul-escuro" onclick="salvarBackup()">💾 Salvar Backup</button>
       <button class="azul-escuro" onclick="document.getElementById('arquivoBackup').click()">📂 Abrir Backup</button>
-      <button onclick="exportarCSV()">⬇ Exportar CSV (Excel)</button>
       <button class="cinza" onclick="window.print()">🖨 Imprimir / PDF</button>
       <button class="vermelho-acao" onclick="limparTudo()">🗑 Limpar Tudo</button>
       <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none" onchange="abrirBackup(this)">
@@ -125,7 +133,45 @@
     </div>
   </section>
 
-  <footer>Planilha automática de biometria • dados salvos localmente no seu navegador</footer>
+  <footer>Planilha automática de biometria • dados salvos no navegador e na sua Google Planilhas</footer>
+</div>
+
+<!-- ============ MODAL: SINCRONIZAÇÃO GOOGLE PLANILHAS ============ -->
+<div class="modal-bg" id="modalSync">
+  <div class="modal">
+    <h3>🔗 Sincronizar com Google Planilhas</h3>
+    <p class="modal-sub">Mão única: tudo que você digita aqui é copiado automaticamente para a sua planilha do Google — um backup seguro na nuvem.</p>
+    <ol class="modal-passos">
+      <li>Crie uma planilha no Google Sheets.</li>
+      <li>Menu <b>Extensões → Apps Script</b>, apague tudo e cole o código do arquivo <b>apps-script.gs</b>.</li>
+      <li><b>Implantar → Novo app da web</b> → acesso <b>“Qualquer pessoa”</b> → copie a URL (termina em <b>/exec</b>).</li>
+      <li>Cole a URL abaixo e toque em <b>Salvar e conectar</b>.</li>
+    </ol>
+    <label class="modal-rot">URL do app da web</label>
+    <input id="inpSyncUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+    <div id="syncMsg" class="modal-msg"></div>
+    <div class="modal-acoes">
+      <button class="verde" onclick="salvarUrlSync()">Salvar e conectar</button>
+      <button class="azul-escuro" onclick="testarSync()">Testar conexão</button>
+      <button class="cinza" onclick="fecharConfigSync()">Fechar</button>
+    </div>
+    <button class="link-desconectar" onclick="desconectarSync()">Desconectar planilha</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: CONFIRMAR EXCLUSÃO ============ -->
+<div class="modal-bg" id="modalLimpar">
+  <div class="modal modal-perigo">
+    <h3>🗑 Apagar todos os dados?</h3>
+    <p class="modal-sub">Esta ação apaga <b>todas as biometrias e o cabeçalho</b> deste tanque — no app e também na sua planilha do Google. <b>Não dá para desfazer.</b></p>
+    <p class="modal-sub">Quer guardar uma cópia antes? Feche e clique em <b>💾 Salvar Backup</b>.</p>
+    <label class="modal-rot">Para confirmar, digite <b>APAGAR</b> abaixo:</label>
+    <input id="inpConfirmaApagar" type="text" placeholder="APAGAR" autocomplete="off" oninput="validarApagar()">
+    <div class="modal-acoes">
+      <button class="vermelho-acao" id="btnConfirmaApagar" onclick="confirmarLimpeza()" disabled>Apagar tudo</button>
+      <button class="cinza" onclick="fecharLimpar()">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>

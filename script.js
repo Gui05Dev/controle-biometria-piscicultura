@@ -60,12 +60,12 @@ function criarLinha(d = {}) {
     <td><input class="data in-data" type="date" min="2000-01-01" max="2100-12-31" value="${d.data ?? ""}"></td>
     <td><input class="in-saldo" type="number" min="0" max="100000000" step="1"    value="${d.saldo ?? ""}"></td>
     <td><input class="in-cap"   type="number" min="0" max="1000000"   step="1"    value="${d.cap ?? ""}"></td>
-    <td><input class="in-peso"  type="number" min="0" max="50000"     step="0.1"  value="${d.peso ?? ""}"></td>
+    <td><input class="in-peso"  type="number" min="0" max="50000"     step="any"  value="${d.peso ?? ""}"></td>
     <td class="calc out-gpd">—</td>
     <td class="calc out-bio">—</td>
     <td class="calc out-gbio">—</td>
     <td class="calc out-gbioac">—</td>
-    <td><input class="in-racao" type="number" min="0" max="100000000" step="0.01" value="${d.racao ?? ""}"></td>
+    <td><input class="in-racao" type="number" min="0" max="100000000" step="any" value="${d.racao ?? ""}"></td>
     <td class="calc calc-racao out-convp">—</td>
     <td class="calc calc-racao out-racac">—</td>
     <td class="calc calc-racao out-convac">—</td>
@@ -325,6 +325,7 @@ function aplicarEstado(e) {
 }
 function salvar() {
   try { localStorage.setItem(CHAVE, JSON.stringify(coletarEstado())); } catch (x) {}
+  agendarSync();
 }
 function carregar() {
   let e = null;
@@ -361,13 +362,28 @@ function abrirBackup(input) {
   };
   reader.readAsText(file);
 }
+/* Abre o modal de confirmação (dupla checagem antes de apagar) */
 function limparTudo() {
-  if (!confirm("Apagar todos os dados desta planilha?")) return;
+  $("inpConfirmaApagar").value = "";
+  $("btnConfirmaApagar").disabled = true;
+  $("modalLimpar").classList.add("show");
+  $("inpConfirmaApagar").focus();
+}
+function fecharLimpar() { $("modalLimpar").classList.remove("show"); }
+/* Só libera o botão vermelho quando a pessoa digita APAGAR */
+function validarApagar() {
+  const ok = $("inpConfirmaApagar").value.trim().toUpperCase() === "APAGAR";
+  $("btnConfirmaApagar").disabled = !ok;
+}
+/* Executa a limpeza de fato */
+function confirmarLimpeza() {
+  if ($("inpConfirmaApagar").value.trim().toUpperCase() !== "APAGAR") return;
   localStorage.removeItem(CHAVE);
   camposCabecalho.forEach(c => $(c).value = "");
   $("corpo").innerHTML = "";
   for (let i = 0; i < 5; i++) $("corpo").appendChild(criarLinha());
   calcular();
+  fecharLimpar();
 }
 
 /* ---------- Exportar CSV ---------- */
@@ -403,9 +419,147 @@ function exportarCSV() {
   URL.revokeObjectURL(a.href);
 }
 
+/* ===================================================================
+   SINCRONIZAÇÃO COM GOOGLE PLANILHAS  (mão única: app -> planilha)
+=================================================================== */
+const CHAVE_URL = "copacol_sheets_url";
+// URL padrão da planilha (já conecta sozinho em qualquer aparelho).
+// Pode ser trocada/desconectada pelo chip de sincronização no topo.
+const URL_PADRAO = "https://script.google.com/macros/s/AKfycbyLMKzEpIiiDK4nPM5FJlpuTC_5kMxodtfRz3sBkiAFCXzV7mHDaHGX083BgPp6GOB-/exec";
+let urlPlanilha = localStorage.getItem(CHAVE_URL) || URL_PADRAO;
+let syncTimer   = null;
+let syncPendente = false;
+
+/* Atualiza o "chip" de status no cabeçalho */
+function statusSync(estado, texto) {
+  const chip = $("syncChip");
+  if (!chip) return;
+  chip.className = "sync-chip " + estado;
+  const rotulos = {
+    off:      "🔌 Conectar planilha",
+    ok:       "🟢 Sincronizado",
+    enviando: "🟡 Enviando…",
+    erro:     "🔴 Sem conexão",
+  };
+  chip.textContent = texto || rotulos[estado] || rotulos.off;
+}
+
+/* Monta a matriz (linhas x colunas) que será espelhada na planilha.
+   Mesmo conteúdo do CSV: cabeçalho + tabela com colunas calculadas. */
+function matrizParaPlanilha() {
+  const numOuTxt = v => {
+    const n = parseFloat(String(v).replace(",", "."));
+    return (v !== "" && v != null && !isNaN(n)) ? n : (v || "");
+  };
+  const L = [];
+  L.push(["Copacol — CONTROLE DE BIOMETRIA"]);
+  L.push(["Produtor", $("produtor").value]);
+  L.push(["Nº Tanque", $("tanque").value]);
+  L.push(["Data Alojamento", $("dataAloj").value]);
+  L.push(["Área (m²)", numOuTxt($("area").value)]);
+  L.push(["Nº Total Peixes", numOuTxt($("totalPeixes").value)]);
+  L.push(["Peso Médio Inicial (g)", numOuTxt($("pesoInicial").value)]);
+  L.push(["Biomassa (kg)", $("biomassaInicial").value]);
+  L.push(["Peixes/m²", $("peixesM2").value]);
+  L.push(["Mortos Aloj.", numOuTxt($("mortosAloj").value)]);
+  L.push(["Atualizado em", new Date().toLocaleString("pt-BR")]);
+  L.push([]);
+  L.push(["Data","Saldo de Peixes","Peixes Capturados","Peso Médio (g)","Ganho peso diário (g)",
+    "Biomassa Total (kg)","Ganho de Biomassa (kg)","Ganho Biomassa Acum (kg)",
+    "Ração do Período (kg)","Conversão Período","Ração Acum (kg)","Conversão Acum"]);
+  $("corpo").querySelectorAll("tr").forEach(tr => {
+    const t = s => tr.querySelector(s).textContent;
+    const v = s => tr.querySelector(s).value;
+    L.push([
+      v(".in-data"), numOuTxt(v(".in-saldo")), numOuTxt(v(".in-cap")), numOuTxt(v(".in-peso")),
+      t(".out-gpd"), t(".out-bio"), t(".out-gbio"), t(".out-gbioac"),
+      numOuTxt(v(".in-racao")), t(".out-convp"), t(".out-racac"), t(".out-convac"),
+    ]);
+  });
+  return L;
+}
+
+/* Agenda o envio com atraso (debounce) — evita mandar a cada tecla */
+function agendarSync() {
+  if (!urlPlanilha) return;          // só sincroniza se já configurou a URL
+  syncPendente = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(sincronizar, 1500);
+}
+
+/* Envia o estado atual para a planilha */
+async function sincronizar() {
+  if (!urlPlanilha) { statusSync("off"); return; }
+  statusSync("enviando");
+  try {
+    const corpo = JSON.stringify({
+      aba: "Tanque " + ($("tanque").value || "01"),
+      matriz: matrizParaPlanilha(),
+    });
+    // body como string => Content-Type text/plain => evita preflight de CORS
+    const r = await fetch(urlPlanilha, { method: "POST", body: corpo });
+    const j = await r.json();
+    if (j && j.ok) { syncPendente = false; statusSync("ok"); }
+    else throw new Error((j && j.erro) || "resposta inválida");
+  } catch (e) {
+    statusSync("erro");
+    // tenta novamente em 15s (ex.: voltou a internet)
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(sincronizar, 15000);
+  }
+}
+
+/* ---------- Telinha de configuração ---------- */
+function abrirConfigSync() {
+  $("inpSyncUrl").value = urlPlanilha;
+  $("syncMsg").textContent = "";
+  $("modalSync").classList.add("show");
+}
+function fecharConfigSync() { $("modalSync").classList.remove("show"); }
+
+function salvarUrlSync() {
+  const u = $("inpSyncUrl").value.trim();
+  if (u && !/^https:\/\/script\.google\.com\/.*\/exec(\?.*)?$/.test(u)) {
+    $("syncMsg").textContent = "⚠ A URL deve começar com https://script.google.com e terminar em /exec.";
+    return;
+  }
+  urlPlanilha = u;
+  if (u) localStorage.setItem(CHAVE_URL, u);
+  else   localStorage.removeItem(CHAVE_URL);
+  if (u) { $("syncMsg").textContent = "✓ Conectado! Enviando seus dados…"; statusSync("enviando"); sincronizar(); }
+  else   { $("syncMsg").textContent = "Desconectado."; statusSync("off"); }
+}
+
+function desconectarSync() {
+  $("inpSyncUrl").value = "";
+  salvarUrlSync();
+}
+
+async function testarSync() {
+  const u = $("inpSyncUrl").value.trim();
+  if (!u) { $("syncMsg").textContent = "Cole a URL primeiro."; return; }
+  $("syncMsg").textContent = "Testando…";
+  try {
+    const r = await fetch(u, {
+      method: "POST",
+      body: JSON.stringify({ aba: "Teste", matriz: [["Teste de conexão", new Date().toLocaleString("pt-BR")]] }),
+    });
+    const j = await r.json();
+    $("syncMsg").textContent = (j && j.ok)
+      ? "✓ Funcionou! Veja a aba 'Teste' na sua planilha."
+      : "Resposta inesperada: " + JSON.stringify(j);
+  } catch (e) {
+    $("syncMsg").textContent = "✗ Não conectou. Confira se publicou como 'Qualquer pessoa' e se a URL termina em /exec.";
+  }
+}
+
+// Quando a internet voltar, reenvia se ficou algo pendente
+window.addEventListener("online", () => { if (syncPendente) sincronizar(); });
+
 /* ---------- Início ---------- */
 camposCabecalho.forEach(c => {
   $(c).addEventListener("input", calcular);
   $(c).addEventListener("change", () => { limitar($(c)); calcular(); });
 });
 carregar();
+statusSync(urlPlanilha ? "ok" : "off");
