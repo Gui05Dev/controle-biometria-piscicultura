@@ -18,8 +18,9 @@
     <span class="logo"><span class="peixe">🐟</span> Copacol</span>
     <span class="titulo">CONTROLE DE BIOMETRIA</span>
     <span class="marca-dir">
-      <span class="sync-chip off" id="syncChip" onclick="abrirConfigSync()" title="Sincronizar com Google Planilhas">🔌 Conectar planilha</span>
-      <span class="form">FRP-1209 REV. 05</span>
+      <span class="status-sync">
+        <span class="sync-dot off" id="syncChip" onclick="abrirConfigSync()" title="Sincronizar com Google Planilhas"></span>
+      </span>
     </span>
   </div>
 
@@ -27,6 +28,7 @@
   <div class="abas">
     <button class="aba ativa" data-aba="biometria" onclick="mostrarAba('biometria')">📋 Biometria</button>
     <button class="aba" data-aba="painel" onclick="mostrarAba('painel')">📊 Painel &amp; Gráficos</button>
+    <button class="aba" data-aba="lotes" onclick="mostrarAba('lotes')">📦 Lotes</button>
   </div>
 
   <!-- ============================================================
@@ -130,6 +132,92 @@
         </div>
       </div>
 
+    </div>
+  </section>
+
+  <!-- ============================================================
+                       ABA 3 — LOTES (histórico)
+  ============================================================= -->
+  <section id="aba-lotes" class="aba-conteudo">
+    <div class="conteudo">
+      <div class="lotes-topo">
+        <p class="dica">📦 Aqui ficam os <b>últimos 10 lotes encerrados</b>. O lote em andamento continua na aba <b>Biometria</b>. Ao encerrar, ele é guardado aqui e a planilha é limpa para um novo ciclo.</p>
+        <button class="azul-escuro" onclick="encerrarLote()">🏁 Encerrar lote atual</button>
+      </div>
+
+      <div id="comparativoCard" class="painel-card" style="display:none; margin-bottom:18px;">
+        <div class="painel-titulo">📊 Conversão alimentar por lote <span class="legenda">menor é melhor</span></div>
+        <div id="g-comparativo" class="grafico-box"></div>
+      </div>
+
+      <div id="listaLotes" class="lotes-lista"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+                 TELA DE DETALHE DE UM LOTE (só-leitura)
+  ============================================================= -->
+  <section id="aba-lote-detalhe" class="aba-conteudo">
+    <div class="conteudo">
+      <div class="detalhe-topo">
+        <button class="azul-escuro" onclick="mostrarAba('lotes')">← Voltar aos Lotes</button>
+        <div class="detalhe-titulo" id="detTitulo">—</div>
+        <button class="cinza" onclick="imprimirLote()">🖨 Imprimir lote</button>
+      </div>
+
+      <div class="indicadores" id="detIndicadores"></div>
+
+      <h3 class="secao-tit">📋 Biometrias do lote</h3>
+      <div class="tabela-wrap">
+        <table id="detTabela">
+          <thead>
+            <tr class="grupos">
+              <th class="g0"></th>
+              <th class="g1" colspan="7">INFORMAÇÕES DE BIOMETRIA — SEMANAL</th>
+              <th class="g2" colspan="4">CONSUMO DE RAÇÃO E CONVERSÃO</th>
+            </tr>
+            <tr class="colunas">
+              <th>Data</th>
+              <th>Saldo de<br>Peixes</th>
+              <th>Peixes<br>Capturados</th>
+              <th>Peso Médio<br>(g)</th>
+              <th>Ganho peso<br>diário (g)</th>
+              <th>Biomassa<br>Total (kg)</th>
+              <th>Ganho de<br>Biomassa (kg)</th>
+              <th>Ganho Biomassa<br>Acum. (kg)</th>
+              <th>Ração do<br>Período (kg)</th>
+              <th>Conversão<br>Período</th>
+              <th>Ração Acum.<br>(kg)</th>
+              <th>Conversão<br>Acum.</th>
+            </tr>
+          </thead>
+          <tbody id="detCorpo"></tbody>
+        </table>
+      </div>
+
+      <h3 class="secao-tit">📈 Gráficos do lote</h3>
+      <div class="painel-grid">
+        <div class="painel-card">
+          <div class="painel-titulo">📈 Curva de Crescimento — Peso Médio (g)</div>
+          <div id="gd-peso" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">🐟 Biomassa Total (kg)</div>
+          <div id="gd-bio" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">
+            🎯 Conversão Alimentar
+            <span class="legenda"><span class="ponto" style="background:#1289b8"></span>Acumulada
+            <span class="ponto" style="background:#e0982a"></span>Período</span>
+          </div>
+          <div id="gd-conv" class="grafico-box"></div>
+        </div>
+        <div class="painel-card">
+          <div class="painel-titulo">⚡ Ganho de Peso Diário (g)</div>
+          <div id="gd-gpd" class="grafico-box"></div>
+        </div>
+      </div>
     </div>
   </section>
 

@@ -36,6 +36,16 @@ function doPost(e) {
   var resposta = { ok: false };
   try {
     var dados  = JSON.parse(e.postData.contents);
+
+    // ---- Senha (token): só grava se o app enviar o código certo ----
+    // DEVE ser idêntico ao TOKEN_PLANILHA do script.js do app.
+    var TOKEN = 'cpcl_8Kq3Zr9TmW2yF7nLpX5';
+    if (dados.token !== TOKEN) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, erro: 'Token inválido' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     var nomeAba = (dados.aba || 'Biometria').toString().substring(0, 90);
     var matriz  = dados.matriz || [];
 

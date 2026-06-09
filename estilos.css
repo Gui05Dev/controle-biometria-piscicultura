@@ -85,31 +85,39 @@ body {
 .marca .form { font-size: 11px; opacity: .7; font-weight: 600; letter-spacing: .5px; }
 .marca-dir { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 
-/* ---------- CHIP DE SINCRONIZAÇÃO ---------- */
-.sync-chip {
-  font-size: 12px; font-weight: 600; color: #fff;
-  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
-  border-radius: 999px; padding: 7px 14px; cursor: pointer; white-space: nowrap;
-  display: inline-flex; align-items: center; gap: 6px; transition: background .15s, transform .12s;
+/* ---------- INDICADOR DE SINCRONIZAÇÃO (bolinha discreta) ---------- */
+.status-sync { display: inline-flex; align-items: center; gap: 8px; }
+.sync-dot {
+  width: 13px; height: 13px; border-radius: 50%; cursor: pointer; flex: none;
+  background: #9aa9b2; border: 2px solid rgba(255,255,255,.45);
+  transition: transform .15s, box-shadow .15s, background .15s;
 }
-.sync-chip:hover { background: rgba(255,255,255,.24); transform: translateY(-1px); }
-.sync-chip.ok       { background: rgba(26,160,90,.95);  border-color: transparent; }
-.sync-chip.enviando { background: rgba(224,152,42,.95); border-color: transparent; }
-.sync-chip.erro     { background: rgba(208,74,59,.95);  border-color: transparent; }
+.sync-dot:hover { transform: scale(1.2); }
+.sync-dot.ok       { background: #2ecc71; border-color: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(46,204,113,.25); }
+.sync-dot.enviando { background: #f0a93b; border-color: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(240,169,59,.25); animation: pulseDot 1s infinite; }
+.sync-dot.erro     { background: #e0492f; border-color: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(224,73,47,.25); }
+.sync-dot.off      { background: #9aa9b2; }
+@keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
-/* ---------- ABAS ---------- */
+/* ---------- ABAS (estilo pílula) ---------- */
 .abas {
-  display: flex; gap: 4px; padding: 0 28px;
-  background: #062f42;
+  display: flex; gap: 6px; padding: 12px 20px;
+  background: var(--surface-2); border-bottom: 1px solid var(--line);
 }
 .aba {
-  border: none; background: transparent; color: rgba(255,255,255,.6);
-  font-size: 13.5px; font-weight: 600; padding: 14px 22px; cursor: pointer;
-  border-bottom: 2.5px solid transparent; border-radius: 0; box-shadow: none;
-  letter-spacing: .2px; transition: color .15s, background .15s, border-color .15s;
+  border: none; background: transparent; color: var(--ink-500);
+  font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer;
+  border-radius: 10px; box-shadow: none; letter-spacing: .2px;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: color .15s, background .15s, box-shadow .15s;
 }
-.aba:hover { color: #fff; background: rgba(255,255,255,.05); transform: none; box-shadow: none; }
-.aba.ativa { color: #fff; background: rgba(255,255,255,.06); border-bottom-color: var(--accent); }
+.aba:hover { color: var(--brand-700); background: rgba(18,137,184,.09); transform: none; box-shadow: none; }
+.aba.ativa {
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-700));
+  box-shadow: 0 4px 12px rgba(10,90,125,.22);
+}
+.aba.ativa:hover { color: #fff; background: linear-gradient(135deg, var(--brand-500), var(--brand-700)); }
 .aba-conteudo { display: none; }
 .aba-conteudo.ativa { display: block; animation: surge .25s ease; }
 @keyframes surge { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -283,6 +291,38 @@ footer { text-align: center; color: var(--ink-400); font-size: 12px; padding: 18
 .grafico .ponto-hover { cursor: pointer; }
 .sem-dados { padding: 60px 40px; text-align: center; color: var(--ink-400); font-size: 13px; }
 
+/* ---------- ABA LOTES (histórico) ---------- */
+.lotes-topo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.lotes-topo .dica { margin: 0; flex: 1 1 280px; }
+.lotes-topo button { white-space: nowrap; }
+.lotes-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.lote-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px;
+  box-shadow: var(--sh-sm); transition: transform .15s, box-shadow .15s;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.lote-card:hover { transform: translateY(-2px); box-shadow: var(--sh); }
+.lote-cab { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.lote-titulo { font-size: 15px; font-weight: 800; color: var(--ink-900); }
+.lote-titulo span { font-weight: 600; color: var(--ink-500); font-size: 13px; }
+.lote-periodo { font-size: 12px; color: var(--ink-400); margin-top: 4px; font-weight: 600; }
+.lote-metrcs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.lote-metrcs > div { display: flex; flex-direction: column; }
+.lote-metrcs span { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-400); font-weight: 700; }
+.lote-metrcs b { font-size: 16px; color: var(--brand-700); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.lote-acoes { display: flex; gap: 8px; }
+.lote-acoes button { flex: 1; justify-content: center; font-size: 13px; padding: 10px; }
+
+/* ---------- TELA DE DETALHE DO LOTE ---------- */
+.detalhe-topo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.detalhe-titulo { flex: 1; min-width: 200px; font-size: 18px; font-weight: 800; color: var(--ink-900); line-height: 1.3; }
+.detalhe-titulo span { font-weight: 600; color: var(--ink-500); font-size: 15px; }
+.detalhe-sub { font-size: 12.5px; font-weight: 600; color: var(--ink-400); margin-top: 3px; }
+.secao-tit { font-size: 14px; font-weight: 700; color: var(--brand-700); margin: 24px 0 12px; }
+#detTabela td { font-variant-numeric: tabular-nums; }
+#detTabela td.aviso  { background: #fff6e7; color: #9c6512; font-weight: 700; }
+#detTabela td.alerta { background: #fdeeec; color: #b23320; font-weight: 700; }
+
 /* ---------- MODAIS ---------- */
 .modal-bg {
   display: none; position: fixed; inset: 0; background: rgba(7,40,58,.55);
@@ -317,13 +357,30 @@ footer { text-align: center; color: var(--ink-400); font-size: 12px; padding: 18
 .modal-perigo input { border-color: #e6b0aa; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; text-align: center; }
 .modal-perigo input:focus { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(208,74,59,.15); }
 
+/* ---------- TOAST (notificação) ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+  background: var(--ink-900); color: #fff; padding: 13px 20px; border-radius: 12px;
+  font-size: 14px; font-weight: 600; box-shadow: var(--sh-lg); max-width: 90vw;
+  display: flex; align-items: center; gap: 8px; z-index: 200;
+  opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok    { background: #1aa05a; }
+.toast.aviso { background: #d98b1f; }
+.toast.erro  { background: #d04a3b; }
+
 /* ---------- IMPRESSÃO ---------- */
 @media print {
   body { background: #fff; }
   .pagina { box-shadow: none; margin: 0; max-width: none; border-radius: 0; }
-  .acoes, .acoes-sec, button.linha-x, .dica, .abas, .sync-chip { display: none; }
+  .acoes, .acoes-sec, button.linha-x, .dica, .abas, .sync-dot, .detalhe-topo button { display: none; }
   .aba-conteudo { display: block !important; }
   .tabela-wrap { box-shadow: none; border: 1px solid #ccc; }
+
+  /* Imprimir SOMENTE o lote: esconde as outras abas */
+  body.imprimindo-lote .aba-conteudo { display: none !important; }
+  body.imprimindo-lote #aba-lote-detalhe { display: block !important; }
 }
 
 /* ---------- CELULAR / TELAS PEQUENAS ---------- */
@@ -336,8 +393,8 @@ footer { text-align: center; color: var(--ink-400); font-size: 12px; padding: 18
   .marca .form { display: none; }
   .marca-dir { align-items: center; }
 
-  .abas { padding: 0; }
-  .aba { flex: 1; padding: 13px 6px; font-size: 13px; text-align: center; }
+  .abas { padding: 8px; gap: 5px; }
+  .aba { flex: 1; padding: 11px 4px; font-size: 12.5px; justify-content: center; text-align: center; }
 
   .nav-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 14px; }
   .nav-field input { font-size: 16px; padding: 11px; } /* 16px evita zoom no iPhone */
