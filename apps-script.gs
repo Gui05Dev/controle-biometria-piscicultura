@@ -1,37 +1,3 @@
-/**
- * ============================================================
- *  COPACOL — CONTROLE DE BIOMETRIA
- *  Integração: App  ──►  Google Planilhas  (mão única)
- * ============================================================
- *
- *  COMO INSTALAR (faça uma vez, leva ~5 minutos):
- *
- *  1) Acesse https://sheets.google.com com a conta
- *     Guilhermetoigo123@gmail.com e crie uma planilha em branco.
- *     Dê um nome, ex.: "Biometria Copacol".
- *
- *  2) No menu da planilha: Extensões → Apps Script.
- *     Apague qualquer código que aparecer e COLE TODO este arquivo.
- *     Clique no disquete 💾 (Salvar).
- *
- *  3) Botão azul "Implantar" (canto superior direito) →
- *     "Nova implantação" → engrenagem ⚙ → escolha "App da Web".
- *        • Descrição:        Biometria
- *        • Executar como:    Eu (seu e-mail)
- *        • Quem pode acessar: QUALQUER PESSOA   ← importante!
- *     Clique "Implantar". Autorize o acesso quando pedir
- *     (escolha sua conta → "Avançado" → "Acessar (não seguro)" →
- *      "Permitir"). Isso é normal, é o seu próprio script.
- *
- *  4) Copie a "URL do app da Web" (termina em /exec).
- *     Volte ao app de biometria, toque no botão de sincronização
- *     no topo, cole essa URL e salve. Pronto!
- *
- *  Depois disso, tudo que você digitar no app é copiado
- *  automaticamente para a aba "Tanque XX" da sua planilha.
- * ============================================================
- */
-
 function doPost(e) {
   var resposta = { ok: false };
   try {
