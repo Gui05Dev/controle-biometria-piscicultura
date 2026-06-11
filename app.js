@@ -1,12 +1,31 @@
-"use strict";
-
+/* ===================================================================
+   COPACOL — CONTROLE DE BIOMETRIA  (módulo principal)
+   Lê o DOM, calcula, persiste no navegador e sincroniza com o Sheets.
+   Depende de util.js, calculo.js e grafico.js — carregados antes no index.html.
+=================================================================== */
 const CHAVE = "copacol_biometria_v3";
-const camposCabecalho = ["produtor","tanque","dataAloj","area","totalPeixes","pesoInicial","mortosAloj"];
+const CHAVE_TS = "copacol_estado_ts"; // data/hora da última alteração local (p/ mão dupla)
+const camposCabecalho = ["produtor", "tanque", "dataAloj", "area", "totalPeixes", "pesoInicial", "mortosAloj"];
 
-/* ---------- Dados iniciais (transcritos do formulário) ---------- */
+/* Cabeçalhos das colunas da tabela — FONTE ÚNICA.
+   COLUNAS_TABELA: com <br> p/ os cabeçalhos HTML (gerados por montarThead).
+   COLUNAS_PLANILHA: texto simples p/ a planilha/exportação. */
+const COLUNAS_TABELA = [
+  "Data", "Saldo de<br>Peixes", "Peixes<br>Capturados", "Peso Médio<br>(g)",
+  "Ganho peso<br>diário (g)", "Biomassa<br>Total (kg)", "Ganho de<br>Biomassa (kg)",
+  "Ganho Biomassa<br>Acum. (kg)", "Ração do<br>Período (kg)", "Conversão<br>Período",
+  "Ração Acum.<br>(kg)", "Conversão<br>Acum.",
+];
+const COLUNAS_PLANILHA = [
+  "Data", "Saldo de Peixes", "Peixes Capturados", "Peso Médio (g)", "Ganho peso diário (g)",
+  "Biomassa Total (kg)", "Ganho de Biomassa (kg)", "Ganho Biomassa Acum (kg)",
+  "Ração do Período (kg)", "Conversão Período", "Ração Acum (kg)", "Conversão Acum",
+];
+
+/* ---------- Dados iniciais (exemplo fictício de demonstração) ---------- */
 const SEED = {
   cab: {
-    produtor: "Juan Tiago",
+    produtor: "Produtor Exemplo",
     tanque: "01",
     dataAloj: "2025-12-03",
     area: "7840",
@@ -36,44 +55,28 @@ const SEED = {
   ],
 };
 
-/* ---------- Utilidades ---------- */
-const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? 0 : n; };
-const fmt = (v, casas = 2) => (isFinite(v) ? v : 0).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
-const $ = id => document.getElementById(id);
-const dias = (de, ate) => {
-  if (!de || !ate) return 0;
-  const d = (new Date(ate) - new Date(de)) / 86400000;
-  return d > 0 ? d : 0;
-};
-// Data de hoje no formato AAAA-MM-DD (fuso local)
-function hoje() {
-  const d = new Date();
-  const mes = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mes}-${dia}`;
+/* ---------- Leitura das linhas da tabela (fonte única) ---------- */
+function lerLinha(tr) {
+  return {
+    data:  tr.querySelector(".in-data").value,
+    saldo: tr.querySelector(".in-saldo").value,
+    cap:   tr.querySelector(".in-cap").value,
+    peso:  tr.querySelector(".in-peso").value,
+    racao: tr.querySelector(".in-racao").value,
+  };
 }
+function lerLinhas() { return [...$("corpo").querySelectorAll("tr")].map(lerLinha); }
 
-/* Escapa HTML — evita injeção de <script>/atributos ao montar innerHTML */
-function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, c =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-/* Neutraliza injeção de fórmula no Google Sheets (= + - @ no início) */
-const _formulaPerigo = /^[=+\-@\t\r]/;
-function celulaSegura(v) {
-  return (typeof v === "string" && _formulaPerigo.test(v)) ? "'" + v : v;
-}
-
-/* Notificação flutuante (toast). tipo: "ok" | "aviso" | "erro" */
-let _toastTimer = null;
-function notificar(msg, tipo = "ok") {
-  let t = document.getElementById("toast");
-  if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
-  t.className = "toast " + tipo + " show";
-  t.textContent = msg;
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => { t.className = "toast " + tipo; }, 3200);
+/* ---------- Cabeçalho da tabela gerado a partir das colunas ---------- */
+function montarThead(comAcoes) {
+  const grupos = `<tr class="grupos">
+      <th class="g0"></th>
+      <th class="g1" colspan="7">INFORMAÇÕES DE BIOMETRIA — SEMANAL</th>
+      <th class="g2" colspan="4">CONSUMO DE RAÇÃO E CONVERSÃO</th>
+      ${comAcoes ? '<th class="g0"></th>' : ""}
+    </tr>`;
+  const cols = `<tr class="colunas">${COLUNAS_TABELA.map(c => `<th>${c}</th>`).join("")}${comAcoes ? "<th></th>" : ""}</tr>`;
+  return grupos + cols;
 }
 
 /* ---------- Criar linha ---------- */
@@ -93,7 +96,7 @@ function criarLinha(d) {
     <td class="calc calc-racao out-convp">—</td>
     <td class="calc calc-racao out-racac">—</td>
     <td class="calc calc-racao out-convac">—</td>
-    <td><button class="linha-x" onclick="removerLinha(this)">✕</button></td>
+    <td><button class="linha-x" type="button" data-action="remover-linha" aria-label="Remover biometria">✕</button></td>
   `;
   tr.querySelectorAll("input").forEach(i => {
     i.addEventListener("input", calcular);
@@ -105,16 +108,18 @@ function criarLinha(d) {
   return tr;
 }
 
-/* Trava o valor dentro do mínimo/máximo definido no campo */
+/* Trava o valor dentro do mínimo/máximo definido no campo (avisa se ajustar) */
 function limitar(input) {
   if (input.type !== "number" || input.value === "") return;
   let v = parseFloat(input.value);
   if (isNaN(v)) { input.value = ""; return; }
   const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
   const max = input.max !== "" ? parseFloat(input.max) : Infinity;
-  if (v < min) v = min;
-  if (v > max) v = max;
+  let ajustado = false;
+  if (v < min) { v = min; ajustado = true; }
+  if (v > max) { v = max; ajustado = true; }
   input.value = v;
+  if (ajustado) notificar(`Valor ajustado para o limite permitido (${fmt(v, 0)}).`, "aviso");
 }
 
 /* Reordena as linhas pela data (linhas sem data vão para o fim) */
@@ -139,7 +144,8 @@ function marcar(el, cond, msg, classe) {
   if (cond) { el.classList.add(classe); el.title = msg; }
   else el.removeAttribute("title");
 }
-// Nova biometria entra com a data de hoje e o saldo de peixes da última linha
+
+/* Nova biometria entra com a data de hoje e o saldo de peixes da última linha */
 function adicionarLinha(d) {
   let dados = d;
   if (!dados) {
@@ -153,79 +159,6 @@ function adicionarLinha(d) {
 }
 function removerLinha(b) { b.closest("tr").remove(); calcular(); }
 
-/* ---------- Cálculos ----------
-   Peso médio em GRAMAS.
-   Biomassa (kg)        = saldo x peso(g) / 1000
-   Ganho peso diário(g) = (peso - peso anterior) / dias
-*/
-/* Cálculo PURO: recebe cabeçalho + linhas (dados crus) e devolve tudo
-   calculado. Usado pela tela ao vivo E pelo detalhe de um lote salvo. */
-function computar(cab, linhasDados) {
-  cab = cab || {};
-  linhasDados = Array.isArray(linhasDados) ? linhasDados : [];
-  const totalPeixes = num(cab.totalPeixes);
-  const pesoInicial = num(cab.pesoInicial); // gramas
-  const area        = num(cab.area);
-  const dataAloj    = cab.dataAloj || "";
-
-  const biomassaInicial = totalPeixes * pesoInicial / 1000; // kg
-
-  let pesoAnt = pesoInicial;
-  let bioAnt  = biomassaInicial;
-  let dataAnt = dataAloj;
-  let prevDataRow = dataAloj;
-  let racaoAcum = 0;
-  let ultSaldo = totalPeixes;
-  const pts = [];
-  const linhas = [];
-
-  linhasDados.forEach(d => {
-    const data  = d.data || "";
-    const saldo = num(d.saldo);
-    const peso  = num(d.peso); // gramas
-    const racao = num(d.racao);
-
-    const temPeso = peso > 0;
-    const nd = dias(dataAnt, data);
-
-    const gpd    = (temPeso && nd > 0) ? (peso - pesoAnt) / nd : 0;
-    const bio    = saldo * peso / 1000;
-    const gbio   = bio - bioAnt;            // período (1ª linha usa biomassa inicial)
-    const gbioac = bio - biomassaInicial;   // acumulado
-    racaoAcum += racao;
-    const convp  = gbio   > 0 ? racao     / gbio   : 0;
-    const convac = gbioac > 0 ? racaoAcum / gbioac : 0;
-
-    const foraOrdem = !!(data && prevDataRow && (new Date(data) <= new Date(prevDataRow)));
-
-    linhas.push({
-      data, saldo: d.saldo, cap: d.cap, peso: d.peso, racao: d.racao,
-      gpd:    temPeso ? fmt(gpd, 2) : "—",
-      bio:    bio > 0 ? fmt(bio, 0) : "—",
-      gbio:   bio > 0 ? fmt(gbio, 0) : "—",
-      gbioac: bio > 0 ? fmt(gbioac, 0) : "—",
-      convp:  convp > 0 ? fmt(convp, 2) : "—",
-      racac:  racaoAcum > 0 ? fmt(racaoAcum, 0) : "—",
-      convac: convac > 0 ? fmt(convac, 2) : "—",
-      flags: {
-        dataAlerta: foraOrdem,
-        pesoAviso:  temPeso && peso < pesoAnt,
-        gbioAlerta: bio > 0 && gbio < 0,
-        convpAviso: convp > 2.5,
-      },
-    });
-
-    if (saldo > 0) ultSaldo = saldo;
-    if (temPeso) {
-      pts.push({ data, peso, bio, gbioac, gpd, convp, convac });
-      pesoAnt = peso; bioAnt = bio; dataAnt = data || dataAnt;
-    }
-    prevDataRow = data || prevDataRow;
-  });
-
-  return { totalPeixes, pesoInicial, area, dataAloj, biomassaInicial, racaoAcum, ultSaldo, pts, linhas };
-}
-
 /* Tela ao vivo: lê o DOM, calcula com computar() e escreve de volta */
 function calcular() {
   const cab = {
@@ -233,15 +166,7 @@ function calcular() {
     area: $("area").value, dataAloj: $("dataAloj").value,
   };
   const trs = [...$("corpo").querySelectorAll("tr")];
-  const dados = trs.map(tr => ({
-    data:  tr.querySelector(".in-data").value,
-    saldo: tr.querySelector(".in-saldo").value,
-    cap:   tr.querySelector(".in-cap").value,
-    peso:  tr.querySelector(".in-peso").value,
-    racao: tr.querySelector(".in-racao").value,
-  }));
-
-  const c = computar(cab, dados);
+  const c = computar(cab, trs.map(lerLinha));
 
   $("biomassaInicial").value = fmt(c.biomassaInicial, 2) + " kg";
   $("peixesM2").value = c.area > 0 ? fmt(c.totalPeixes / c.area, 2) : "—";
@@ -267,8 +192,14 @@ function calcular() {
   salvar();
 }
 
-/* ---------- Painel: indicadores + gráficos ---------- */
+/* ---------- Painel: indicadores + gráficos ----------
+   Os indicadores (texto) são baratos e atualizam sempre; os gráficos (SVG)
+   só são redesenhados quando a aba Painel está visível (e ao abri-la). */
+let _ultPts = [], _ultCtx = {};
+function painelVisivel() { return $("aba-painel").classList.contains("ativa"); }
+
 function atualizarPainel(pts, ctx) {
+  _ultPts = pts; _ultCtx = ctx;
   const ult = pts[pts.length - 1];
   const diasCult = ult ? dias(ctx.dataAloj, ult.data) : 0;
 
@@ -279,87 +210,7 @@ function atualizarPainel(pts, ctx) {
   $("iRacao").textContent  = ctx.racaoAcum > 0 ? fmt(ctx.racaoAcum, 0) + " kg" : "—";
   $("iConv").textContent   = (ult && ult.convac > 0) ? fmt(ult.convac, 2) : "—";
 
-  grafico($("g-peso"), [{ cor: "#1289b8", dados: pts.map(p => ({ x: p.data, y: p.peso })) }], { casas: 0 });
-  grafico($("g-bio"),  [{ cor: "#1f8a5a", dados: pts.map(p => ({ x: p.data, y: p.bio })) }],  { casas: 0 });
-  grafico($("g-conv"), [
-    { cor: "#1289b8", dados: pts.filter(p => p.convac > 0).map(p => ({ x: p.data, y: p.convac })) },
-    { cor: "#e0982a", dados: pts.filter(p => p.convp  > 0).map(p => ({ x: p.data, y: p.convp  })) },
-  ], { casas: 2 });
-  grafico($("g-gpd"),  [{ cor: "#7a55c8", dados: pts.map(p => ({ x: p.data, y: p.gpd })) }],  { casas: 1 });
-}
-
-/* ---------- Gráfico de linhas em SVG (sem bibliotecas) ---------- */
-function fmtDataCurta(iso) {
-  if (!iso) return "";
-  const [, m, d] = iso.split("-");
-  return `${d}/${m}`;
-}
-function grafico(el, series, opts = {}) {
-  if (!el) return;
-  const base = series.find(s => s.dados.length >= 2);
-  if (!base) { el.innerHTML = '<div class="sem-dados">Adicione pelo menos 2 biometrias com peso</div>'; return; }
-
-  const W = 620, H = 320, pl = 56, pr = 22, ptop = 26, pb = 52;
-  const iw = W - pl - pr, ih = H - ptop - pb;
-  const umaSerie = series.filter(s => s.dados.length).length === 1;
-
-  const ys = [];
-  series.forEach(s => s.dados.forEach(p => ys.push(p.y)));
-  let ymin = Math.min(...ys), ymax = Math.max(...ys);
-  if (ymin === ymax) ymax = ymin + 1;
-  const folga = (ymax - ymin) * 0.15;
-  ymin = Math.max(0, ymin - folga);
-  ymax = ymax + folga;
-
-  const n = base.dados.length;
-  const xAt = i => pl + (n === 1 ? iw / 2 : iw * i / (n - 1));
-  const yAt = v => ptop + ih - ((v - ymin) / (ymax - ymin)) * ih;
-  const baseY = yAt(ymin);
-
-  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="grafico">`;
-
-  // Linhas de grade + rótulos do eixo Y
-  const div = 4;
-  for (let g = 0; g <= div; g++) {
-    const val = ymin + (ymax - ymin) * g / div;
-    const y = yAt(val);
-    svg += `<line x1="${pl}" y1="${y}" x2="${W - pr}" y2="${y}" class="grade"/>`;
-    svg += `<text x="${pl - 8}" y="${y + 4}" class="rotuloY">${fmt(val, opts.casas ?? 0)}</text>`;
-  }
-
-  // Rótulos do eixo X (datas)
-  base.dados.forEach((p, i) => {
-    const x = xAt(i);
-    svg += `<text x="${x + 4}" y="${H - pb + 22}" class="rotuloX" transform="rotate(-40 ${x} ${H - pb + 22})">${fmtDataCurta(p.x)}</text>`;
-  });
-
-  // Séries
-  series.forEach(s => {
-    if (s.dados.length < 1) return;
-    const coords = s.dados.map((p, i) => `${xAt(i).toFixed(1)},${yAt(p.y).toFixed(1)}`);
-
-    // Área preenchida (somente quando há uma única série, para não poluir)
-    if (umaSerie) {
-      const area = `${xAt(0).toFixed(1)},${baseY.toFixed(1)} ${coords.join(" ")} ${xAt(s.dados.length - 1).toFixed(1)},${baseY.toFixed(1)}`;
-      svg += `<polygon points="${area}" fill="${s.cor}" fill-opacity="0.10"/>`;
-    }
-
-    svg += `<polyline points="${coords.join(" ")}" fill="none" stroke="${s.cor}" stroke-width="3" class="linha"/>`;
-
-    s.dados.forEach((p, i) => {
-      const x = xAt(i), y = yAt(p.y);
-      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#fff" stroke="${s.cor}" stroke-width="2.5"/>`;
-      // Área de hover (maior e invisível) com tooltip: data + valor exato
-      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" fill="transparent" class="ponto-hover"><title>${fmtDataCurta(p.x)} — ${fmt(p.y, opts.casas ?? 0)}</title></circle>`;
-      // Rótulo de valor (só na série única, para manter legível)
-      if (umaSerie) {
-        svg += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="valorPonto" fill="${s.cor}">${fmt(p.y, opts.casas ?? 0)}</text>`;
-      }
-    });
-  });
-
-  svg += "</svg>";
-  el.innerHTML = svg;
+  if (painelVisivel()) desenharGraficos("g", pts);
 }
 
 /* ---------- Troca de abas ---------- */
@@ -372,19 +223,13 @@ function mostrarAba(nome) {
   const btn = document.querySelector(`.aba[data-aba="${nome}"]`);
   if (btn) btn.classList.add("ativa");
   if (nome === "lotes") renderLotes();
+  if (nome === "painel") desenharGraficos("g", _ultPts);
 }
 
 /* ---------- Persistência ---------- */
 function coletarEstado() {
-  const e = { cab: {}, linhas: [] };
+  const e = { cab: {}, linhas: lerLinhas() };
   camposCabecalho.forEach(c => e.cab[c] = $(c).value);
-  $("corpo").querySelectorAll("tr").forEach(tr => e.linhas.push({
-    data:  tr.querySelector(".in-data").value,
-    saldo: tr.querySelector(".in-saldo").value,
-    cap:   tr.querySelector(".in-cap").value,
-    peso:  tr.querySelector(".in-peso").value,
-    racao: tr.querySelector(".in-racao").value,
-  }));
   return e;
 }
 function aplicarEstado(e) {
@@ -396,9 +241,21 @@ function aplicarEstado(e) {
   calcular();
   return true;
 }
+
+/* Salva no localStorage com debounce (evita gravar a cada tecla).
+   salvarAgora() grava na hora — usado ao sair/ocultar a página. */
+let _saveTimer = null;
 function salvar() {
-  try { localStorage.setItem(CHAVE, JSON.stringify(coletarEstado())); } catch (x) {}
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(salvarAgora, 400);
   agendarSync();
+}
+function salvarAgora() {
+  clearTimeout(_saveTimer); _saveTimer = null;
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify(coletarEstado()));
+    localStorage.setItem(CHAVE_TS, String(Date.now())); // marca quando mudou (mão dupla)
+  } catch (x) {}
 }
 function carregar() {
   let e = null;
@@ -436,20 +293,19 @@ function abrirBackup(input) {
   };
   reader.readAsText(file);
 }
-/* Abre o modal de confirmação (dupla checagem antes de apagar) */
+
+/* ---------- Limpar tudo (modal de confirmação) ---------- */
 function limparTudo() {
   $("inpConfirmaApagar").value = "";
   $("btnConfirmaApagar").disabled = true;
-  $("modalLimpar").classList.add("show");
-  $("inpConfirmaApagar").focus();
+  abrirModal("modalLimpar");
 }
-function fecharLimpar() { $("modalLimpar").classList.remove("show"); }
+function fecharLimpar() { fecharModal("modalLimpar"); }
 /* Só libera o botão vermelho quando a pessoa digita APAGAR */
 function validarApagar() {
   const ok = $("inpConfirmaApagar").value.trim().toUpperCase() === "APAGAR";
   $("btnConfirmaApagar").disabled = !ok;
 }
-/* Executa a limpeza de fato */
 function confirmarLimpeza() {
   if ($("inpConfirmaApagar").value.trim().toUpperCase() !== "APAGAR") return;
   localStorage.removeItem(CHAVE);
@@ -458,39 +314,6 @@ function confirmarLimpeza() {
   for (let i = 0; i < 5; i++) $("corpo").appendChild(criarLinha());
   calcular();
   fecharLimpar();
-}
-
-/* ---------- Exportar CSV ---------- */
-function exportarCSV() {
-  const sep = ";", L = [];
-  L.push(["Copacol - CONTROLE DE BIOMETRIA"]);
-  L.push(["Produtor", $("produtor").value]);
-  L.push(["No Tanque", $("tanque").value]);
-  L.push(["Data Alojamento", $("dataAloj").value]);
-  L.push(["Area (m2)", $("area").value]);
-  L.push(["No Total Peixes", $("totalPeixes").value]);
-  L.push(["Peso Medio Inicial (g)", $("pesoInicial").value]);
-  L.push(["Biomassa (kg)", $("biomassaInicial").value]);
-  L.push(["Peixes/m2", $("peixesM2").value]);
-  L.push(["Mortos Aloj.", $("mortosAloj").value]);
-  L.push([]);
-  L.push(["Data","Saldo de Peixes","Peixes Capturados","Peso Medio (g)","Ganho peso diario (g)",
-    "Biomassa Total (kg)","Ganho de Biomassa (kg)","Ganho Biomassa Acum (kg)",
-    "Racao do Periodo (kg)","Conversao Periodo","Racao Acum (kg)","Conversao Acum"]);
-  $("corpo").querySelectorAll("tr").forEach(tr => {
-    const t = s => tr.querySelector(s).textContent;
-    const v = s => tr.querySelector(s).value;
-    L.push([v(".in-data"), v(".in-saldo"), v(".in-cap"), v(".in-peso"), t(".out-gpd"),
-      t(".out-bio"), t(".out-gbio"), t(".out-gbioac"),
-      v(".in-racao"), t(".out-convp"), t(".out-racac"), t(".out-convac")]);
-  });
-  const csv = "﻿" + L.map(l => l.map(c => `"${(c ?? "").toString().replace(/"/g,'""')}"`).join(sep)).join("\r\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `biometria_tanque_${($("tanque").value || "01").replace(/\s+/g,"_")}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
 }
 
 /* ===================================================================
@@ -505,6 +328,8 @@ const TOKEN_PLANILHA = "cpcl_8Kq3Zr9TmW2yF7nLpX5";
 let urlPlanilha = localStorage.getItem(CHAVE_URL) || URL_PADRAO;
 let syncTimer   = null;
 let syncPendente = false;
+// enquanto true, NÃO envia nada (esperando baixar o estado da nuvem ao abrir)
+let _sincronizandoInicial = true;
 
 /* Atualiza a bolinha de status no cabeçalho (com tooltip) */
 function statusSync(estado) {
@@ -540,16 +365,14 @@ function matrizParaPlanilha() {
   L.push(["Mortos Aloj.", numOuTxt($("mortosAloj").value)]);
   L.push(["Atualizado em", new Date().toLocaleString("pt-BR")]);
   L.push([]);
-  L.push(["Data","Saldo de Peixes","Peixes Capturados","Peso Médio (g)","Ganho peso diário (g)",
-    "Biomassa Total (kg)","Ganho de Biomassa (kg)","Ganho Biomassa Acum (kg)",
-    "Ração do Período (kg)","Conversão Período","Ração Acum (kg)","Conversão Acum"]);
+  L.push([...COLUNAS_PLANILHA]);
   $("corpo").querySelectorAll("tr").forEach(tr => {
     const t = s => tr.querySelector(s).textContent;
-    const v = s => tr.querySelector(s).value;
+    const d = lerLinha(tr);
     L.push([
-      v(".in-data"), numOuTxt(v(".in-saldo")), numOuTxt(v(".in-cap")), numOuTxt(v(".in-peso")),
+      d.data, numOuTxt(d.saldo), numOuTxt(d.cap), numOuTxt(d.peso),
       t(".out-gpd"), t(".out-bio"), t(".out-gbio"), t(".out-gbioac"),
-      numOuTxt(v(".in-racao")), t(".out-convp"), t(".out-racac"), t(".out-convac"),
+      numOuTxt(d.racao), t(".out-convp"), t(".out-racac"), t(".out-convac"),
     ]);
   });
   return L;
@@ -557,23 +380,25 @@ function matrizParaPlanilha() {
 
 /* Agenda o envio com atraso (debounce) — evita mandar a cada tecla */
 function agendarSync() {
-  if (!urlPlanilha) return;          // só sincroniza se já configurou a URL
+  if (!urlPlanilha || _sincronizandoInicial) return;  // só sincroniza após baixar a nuvem
   syncPendente = true;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(sincronizar, 1500);
 }
 
-/* Envio genérico: escreve uma matriz em uma aba da planilha */
-async function enviarPlanilha(aba, matriz) {
+/* Envio genérico: escreve uma matriz em uma aba da planilha.
+   extra: campos opcionais no corpo (ex.: { estado, estadoTs } da mão dupla) */
+async function enviarPlanilha(aba, matriz, extra) {
   if (!urlPlanilha) return false;
   // neutraliza fórmulas perigosas em cada célula
   const segura = (Array.isArray(matriz) ? matriz : []).map(l => (Array.isArray(l) ? l : []).map(celulaSegura));
+  const corpo = Object.assign({ token: TOKEN_PLANILHA, aba, matriz: segura }, extra || {});
   // timeout de 20s para não travar a sincronização se a rede pendurar
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20000);
   try {
     // body como string => Content-Type text/plain => evita preflight de CORS
-    const r = await fetch(urlPlanilha, { method: "POST", body: JSON.stringify({ token: TOKEN_PLANILHA, aba, matriz: segura }), signal: ctrl.signal });
+    const r = await fetch(urlPlanilha, { method: "POST", body: JSON.stringify(corpo), signal: ctrl.signal });
     const j = await r.json();
     return !!(j && j.ok);
   } finally {
@@ -581,12 +406,14 @@ async function enviarPlanilha(aba, matriz) {
   }
 }
 
-/* Envia o estado atual (lote em andamento) para a aba do tanque */
+/* Envia o estado atual (lote em andamento) para a aba do tanque.
+   Vai junto o estado cru ({estado, estadoTs}) p/ outros aparelhos baixarem. */
 async function sincronizar() {
   if (!urlPlanilha) { statusSync("off"); return; }
   statusSync("enviando");
   try {
-    const ok = await enviarPlanilha("Tanque " + ($("tanque").value || "01"), matrizParaPlanilha());
+    const extra = { estado: coletarEstado(), estadoTs: Number(localStorage.getItem(CHAVE_TS)) || 0 };
+    const ok = await enviarPlanilha("Tanque " + ($("tanque").value || "01"), matrizParaPlanilha(), extra);
     if (ok) { syncPendente = false; statusSync("ok"); }
     else throw new Error("resposta inválida");
   } catch (e) {
@@ -597,13 +424,36 @@ async function sincronizar() {
   }
 }
 
+/* MÃO DUPLA: baixa o estado mais recente da planilha ao abrir o app.
+   Só substitui o que está na tela se a versão da nuvem for mais nova
+   (compara a data/hora). Em caso de falha/offline, mantém os dados locais. */
+async function sincronizarDaNuvem() {
+  if (!urlPlanilha) return;
+  statusSync("enviando");
+  try {
+    const sep = urlPlanilha.includes("?") ? "&" : "?";
+    const r = await fetch(urlPlanilha + sep + "token=" + encodeURIComponent(TOKEN_PLANILHA));
+    const j = await r.json();
+    const ok = j && j.estado && typeof j.estado === "object" && j.estado.cab;
+    if (ok) {
+      const localTs = Number(localStorage.getItem(CHAVE_TS)) || 0;
+      const nuvemTs = Number(j.estadoTs) || 0;
+      // nuvem só vence se for igual ou mais nova que o local (não atropela edição local recente)
+      if (nuvemTs >= localTs) aplicarEstado(j.estado);
+    }
+    statusSync("ok");
+  } catch (e) {
+    statusSync("erro");
+  }
+}
+
 /* ---------- Telinha de configuração ---------- */
 function abrirConfigSync() {
   $("inpSyncUrl").value = urlPlanilha;
   $("syncMsg").textContent = "";
-  $("modalSync").classList.add("show");
+  abrirModal("modalSync");
 }
-function fecharConfigSync() { $("modalSync").classList.remove("show"); }
+function fecharConfigSync() { fecharModal("modalSync"); }
 
 function salvarUrlSync() {
   const u = $("inpSyncUrl").value.trim();
@@ -641,9 +491,6 @@ async function testarSync() {
   }
 }
 
-// Quando a internet voltar, reenvia se ficou algo pendente
-window.addEventListener("online", () => { if (syncPendente) sincronizar(); });
-
 /* ===================================================================
    LOTES — histórico dos ciclos encerrados (pequeno banco de dados)
 =================================================================== */
@@ -655,21 +502,12 @@ function gravarLotes(arr) {
   sincronizarHistorico();
 }
 
-/* data AAAA-MM-DD -> DD/MM/AAAA */
-function fmtBr(iso) {
-  if (!iso) return "—";
-  const p = String(iso).split("-");
-  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso;
-}
-
 /* Resumo do lote a partir do que está na tela (indicadores já calculados) */
 function resumoAtual() {
   let dataFim = "";
   $("corpo").querySelectorAll("tr").forEach(tr => {
-    if (num(tr.querySelector(".in-peso").value) > 0) {
-      const d = tr.querySelector(".in-data").value;
-      if (d) dataFim = d;
-    }
+    const d = lerLinha(tr);
+    if (num(d.peso) > 0 && d.data) dataFim = d.data;
   });
   return {
     produtor:      $("produtor").value,
@@ -688,7 +526,7 @@ function resumoAtual() {
 function matrizHistorico(lotes) {
   const L = [];
   L.push(["Copacol — HISTÓRICO DE LOTES"]);
-  L.push(["Produtor","Nº Tanque","Alojamento","Última biometria","Dias","Peso final","Biomassa final","Conversão","Ração total","Encerrado em"]);
+  L.push(["Produtor", "Nº Tanque", "Alojamento", "Última biometria", "Dias", "Peso final", "Biomassa final", "Conversão", "Ração total", "Encerrado em"]);
   lotes.forEach(lo => {
     const r = lo.resumo || {};
     L.push([r.produtor, r.tanque, r.dataAloj, r.dataFim, r.dias, r.pesoFinal, r.biomassaFinal, r.conversao, r.racaoTotal, lo.salvoEm]);
@@ -698,12 +536,6 @@ function matrizHistorico(lotes) {
 async function sincronizarHistorico() {
   if (!urlPlanilha) return;
   try { await enviarPlanilha("Histórico", matrizHistorico(lerLotes())); } catch (e) {}
-}
-/* Snapshot completo do lote encerrado numa aba própria */
-async function arquivarNaPlanilha(lote) {
-  if (!urlPlanilha) return;
-  const nome = ("Lote " + (lote.resumo.dataFim || hoje()) + " T" + (lote.resumo.tanque || "01")).substring(0, 90);
-  try { await enviarPlanilha(nome, matrizParaPlanilha()); } catch (e) {}
 }
 
 /* Monta os cartões da aba Lotes */
@@ -745,8 +577,8 @@ function renderLotes() {
           <div><span>Ração total</span><b>${esc(r.racaoTotal || "—")}</b></div>
         </div>
         <div class="lote-acoes">
-          <button class="azul-escuro" onclick="abrirLote(${lo.id})">👁 Abrir</button>
-          <button class="vermelho-acao" onclick="excluirLote(${lo.id})">🗑 Excluir</button>
+          <button class="azul-escuro" type="button" data-action="abrir-lote" data-id="${lo.id}">👁 Abrir</button>
+          <button class="vermelho-acao" type="button" data-action="excluir-lote" data-id="${lo.id}">🗑 Excluir</button>
         </div>
       </div>`;
   }).join("");
@@ -863,13 +695,7 @@ function renderDetalhe(lote) {
     </tr>`).join("");
 
   /* gráficos (mesma função da tela ao vivo) */
-  grafico($("gd-peso"), [{ cor: "#1289b8", dados: c.pts.map(p => ({ x: p.data, y: p.peso })) }], { casas: 0 });
-  grafico($("gd-bio"),  [{ cor: "#1f8a5a", dados: c.pts.map(p => ({ x: p.data, y: p.bio })) }],  { casas: 0 });
-  grafico($("gd-conv"), [
-    { cor: "#1289b8", dados: c.pts.filter(p => p.convac > 0).map(p => ({ x: p.data, y: p.convac })) },
-    { cor: "#e0982a", dados: c.pts.filter(p => p.convp  > 0).map(p => ({ x: p.data, y: p.convp  })) },
-  ], { casas: 2 });
-  grafico($("gd-gpd"), [{ cor: "#7a55c8", dados: c.pts.map(p => ({ x: p.data, y: p.gpd })) }], { casas: 1 });
+  desenharGraficos("gd", c.pts);
 }
 
 /* Imprime SOMENTE a tela de detalhe do lote atual */
@@ -886,11 +712,101 @@ function excluirLote(id) {
   renderLotes();
 }
 
+/* ===================================================================
+   MODAIS — abrir/fechar com foco gerenciado e acessibilidade
+=================================================================== */
+let _ultimoFoco = null;
+function abrirModal(id) {
+  const m = $(id);
+  if (!m) return;
+  _ultimoFoco = document.activeElement;
+  m.classList.add("show");
+  const f = m.querySelector("input, button");
+  if (f) f.focus();
+}
+function fecharModal(id) {
+  const m = $(id);
+  if (m) m.classList.remove("show");
+  if (_ultimoFoco && _ultimoFoco.focus) _ultimoFoco.focus();
+}
+
+/* Esc fecha qualquer modal aberto; Tab fica preso dentro do modal */
+function onKeydown(e) {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".modal-bg.show").forEach(m => m.classList.remove("show"));
+    return;
+  }
+  if (e.key !== "Tab") return;
+  const modal = document.querySelector(".modal-bg.show .modal");
+  if (!modal) return;
+  const foc = [...modal.querySelectorAll('a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])')];
+  if (!foc.length) return;
+  const primeiro = foc[0], ultimo = foc[foc.length - 1];
+  if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+  else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+}
+
+/* ===================================================================
+   WIRING — eventos via delegação (sem handlers inline no HTML)
+=================================================================== */
+const ACOES = {
+  "config-sync":      abrirConfigSync,
+  "add-linha":        () => adicionarLinha(),
+  "salvar-backup":    salvarBackup,
+  "abrir-backup":     () => $("arquivoBackup").click(),
+  "imprimir":         () => window.print(),
+  "limpar":           limparTudo,
+  "encerrar-lote":    encerrarLote,
+  "voltar-lotes":     () => mostrarAba("lotes"),
+  "imprimir-lote":    imprimirLote,
+  "salvar-url":       salvarUrlSync,
+  "testar-sync":      testarSync,
+  "fechar-sync":      fecharConfigSync,
+  "desconectar":      desconectarSync,
+  "confirmar-limpeza": confirmarLimpeza,
+  "fechar-limpar":    fecharLimpar,
+  "remover-linha":    el => removerLinha(el),
+  "abrir-lote":       el => abrirLote(Number(el.dataset.id)),
+  "excluir-lote":     el => excluirLote(Number(el.dataset.id)),
+};
+function onAcaoClick(e) {
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const fn = ACOES[el.dataset.action];
+  if (fn) fn(el);
+}
+
 /* ---------- Início ---------- */
-camposCabecalho.forEach(c => {
-  $(c).addEventListener("input", calcular);
-  $(c).addEventListener("change", () => { limitar($(c)); calcular(); });
-});
-carregar();
-renderLotes();
-statusSync(urlPlanilha ? "ok" : "off");
+function init() {
+  // Cabeçalhos das tabelas a partir da fonte única de colunas
+  $("tabela").querySelector("thead").innerHTML = montarThead(true);
+  $("detTabela").querySelector("thead").innerHTML = montarThead(false);
+
+  // Eventos globais
+  document.addEventListener("click", onAcaoClick);
+  document.addEventListener("keydown", onKeydown);
+  document.querySelectorAll(".aba").forEach(b => b.addEventListener("click", () => mostrarAba(b.dataset.aba)));
+  $("arquivoBackup").addEventListener("change", e => abrirBackup(e.target));
+  $("inpConfirmaApagar").addEventListener("input", validarApagar);
+
+  // Salva pendências ao sair/ocultar a página (compensa o debounce)
+  window.addEventListener("beforeunload", salvarAgora);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") salvarAgora(); });
+  // Quando a internet voltar, reenvia se ficou algo pendente
+  window.addEventListener("online", () => { if (syncPendente) sincronizar(); });
+
+  // Recalcula ao editar o cabeçalho
+  camposCabecalho.forEach(c => {
+    $(c).addEventListener("input", calcular);
+    $(c).addEventListener("change", () => { limitar($(c)); calcular(); });
+  });
+
+  carregar();
+  renderLotes();
+  statusSync(urlPlanilha ? "ok" : "off");
+
+  // MÃO DUPLA: baixa o estado da nuvem antes de liberar os envios automáticos
+  // (evita subir o exemplo de fábrica por cima dos dados bons que já estão na nuvem)
+  sincronizarDaNuvem().finally(() => { _sincronizandoInicial = false; });
+}
+init();

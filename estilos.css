@@ -94,6 +94,8 @@ body {
   background: #9aa9b2; border: 2px solid rgba(255,255,255,.45);
   transition: transform .15s, box-shadow .15s, background .15s;
 }
+/* o chip é um <button> — anula os estilos base de botão (padding/sombra) */
+button.sync-dot { padding: 0; box-shadow: none; }
 .sync-dot:hover { transform: scale(1.2); }
 .sync-dot.ok       { background: #2ecc71; border-color: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(46,204,113,.25); }
 .sync-dot.enviando { background: #f0a93b; border-color: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(240,169,59,.25); animation: pulseDot 1s infinite; }

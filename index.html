@@ -19,16 +19,16 @@
     <span class="titulo">CONTROLE DE BIOMETRIA</span>
     <span class="marca-dir">
       <span class="status-sync">
-        <span class="sync-dot off" id="syncChip" onclick="abrirConfigSync()" title="Sincronizar com Google Planilhas"></span>
+        <button type="button" class="sync-dot off" id="syncChip" data-action="config-sync" aria-label="Sincronizar com Google Planilhas" title="Sincronizar com Google Planilhas"></button>
       </span>
     </span>
   </div>
 
   <!-- ================= ABAS ================= -->
   <div class="abas">
-    <button class="aba ativa" data-aba="biometria" onclick="mostrarAba('biometria')">📋 Biometria</button>
-    <button class="aba" data-aba="painel" onclick="mostrarAba('painel')">📊 Painel &amp; Gráficos</button>
-    <button class="aba" data-aba="lotes" onclick="mostrarAba('lotes')">📦 Lotes</button>
+    <button class="aba ativa" data-aba="biometria">📋 Biometria</button>
+    <button class="aba" data-aba="painel">📊 Painel &amp; Gráficos</button>
+    <button class="aba" data-aba="lotes">📦 Lotes</button>
   </div>
 
   <!-- ============================================================
@@ -37,15 +37,15 @@
   <section id="aba-biometria" class="aba-conteudo ativa">
 
     <div class="nav-grid">
-      <div class="nav-field"><label>Produtor</label><input id="produtor" type="text" placeholder="Nome do produtor"></div>
-      <div class="nav-field"><label>Nº Tanque</label><input id="tanque" type="text" placeholder="01"></div>
-      <div class="nav-field"><label>Data Alojamento</label><input id="dataAloj" type="date"></div>
-      <div class="nav-field"><label>Área (m²)</label><input id="area" type="number" min="0" max="1000000" step="any" placeholder="0"></div>
-      <div class="nav-field"><label>Nº Total Peixes</label><input id="totalPeixes" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
-      <div class="nav-field"><label>Peso Médio Inicial (g)</label><input id="pesoInicial" type="number" min="0" max="50000" step="any" placeholder="44"></div>
-      <div class="nav-field"><label>Biomassa (kg)</label><input id="biomassaInicial" type="text" readonly></div>
-      <div class="nav-field"><label>Peixes / m²</label><input id="peixesM2" type="text" readonly></div>
-      <div class="nav-field"><label>Mortos Aloj.</label><input id="mortosAloj" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
+      <div class="nav-field"><label for="produtor">Produtor</label><input id="produtor" type="text" placeholder="Nome do produtor"></div>
+      <div class="nav-field"><label for="tanque">Nº Tanque</label><input id="tanque" type="text" placeholder="01"></div>
+      <div class="nav-field"><label for="dataAloj">Data Alojamento</label><input id="dataAloj" type="date"></div>
+      <div class="nav-field"><label for="area">Área (m²)</label><input id="area" type="number" min="0" max="1000000" step="any" placeholder="0"></div>
+      <div class="nav-field"><label for="totalPeixes">Nº Total Peixes</label><input id="totalPeixes" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
+      <div class="nav-field"><label for="pesoInicial">Peso Médio Inicial (g)</label><input id="pesoInicial" type="number" min="0" max="50000" step="any" placeholder="44"></div>
+      <div class="nav-field"><label for="biomassaInicial">Biomassa (kg)</label><input id="biomassaInicial" type="text" readonly></div>
+      <div class="nav-field"><label for="peixesM2">Peixes / m²</label><input id="peixesM2" type="text" readonly></div>
+      <div class="nav-field"><label for="mortosAloj">Mortos Aloj.</label><input id="mortosAloj" type="number" min="0" max="100000000" step="1" placeholder="0"></div>
     </div>
 
     <div class="conteudo">
@@ -53,43 +53,21 @@
 
       <div class="tabela-wrap">
         <table id="tabela">
-          <thead>
-            <tr class="grupos">
-              <th class="g0"></th>
-              <th class="g1" colspan="7">INFORMAÇÕES DE BIOMETRIA — SEMANAL</th>
-              <th class="g2" colspan="4">CONSUMO DE RAÇÃO E CONVERSÃO</th>
-              <th class="g0"></th>
-            </tr>
-            <tr class="colunas">
-              <th>Data</th>
-              <th>Saldo de<br>Peixes</th>
-              <th>Peixes<br>Capturados</th>
-              <th>Peso Médio<br>(g)</th>
-              <th>Ganho peso<br>diário (g)</th>
-              <th>Biomassa<br>Total (kg)</th>
-              <th>Ganho de<br>Biomassa (kg)</th>
-              <th>Ganho Biomassa<br>Acum. (kg)</th>
-              <th>Ração do<br>Período (kg)</th>
-              <th>Conversão<br>Período</th>
-              <th>Ração Acum.<br>(kg)</th>
-              <th>Conversão<br>Acum.</th>
-              <th></th>
-            </tr>
-          </thead>
+          <thead><!-- gerado por montarThead() em app.js --></thead>
           <tbody id="corpo"></tbody>
         </table>
       </div>
     </div>
 
     <div class="acoes acoes-primaria">
-      <button class="verde grande" onclick="adicionarLinha()">＋ Nova Biometria</button>
+      <button class="verde grande" type="button" data-action="add-linha">＋ Nova Biometria</button>
     </div>
     <div class="acoes-sec">
-      <button class="azul-escuro" onclick="salvarBackup()">💾 Salvar Backup</button>
-      <button class="azul-escuro" onclick="document.getElementById('arquivoBackup').click()">📂 Abrir Backup</button>
-      <button class="cinza" onclick="window.print()">🖨 Imprimir / PDF</button>
-      <button class="vermelho-acao" onclick="limparTudo()">🗑 Limpar Tudo</button>
-      <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none" onchange="abrirBackup(this)">
+      <button class="azul-escuro" type="button" data-action="salvar-backup">💾 Salvar Backup</button>
+      <button class="azul-escuro" type="button" data-action="abrir-backup">📂 Abrir Backup</button>
+      <button class="cinza" type="button" data-action="imprimir">🖨 Imprimir / PDF</button>
+      <button class="vermelho-acao" type="button" data-action="limpar">🗑 Limpar Tudo</button>
+      <input type="file" id="arquivoBackup" accept=".json,application/json" style="display:none">
     </div>
 
   </section>
@@ -142,7 +120,7 @@
     <div class="conteudo">
       <div class="lotes-topo">
         <p class="dica">📦 Aqui ficam os <b>últimos 10 lotes encerrados</b>. O lote em andamento continua na aba <b>Biometria</b>. Ao encerrar, ele é guardado aqui e a planilha é limpa para um novo ciclo.</p>
-        <button class="azul-escuro" onclick="encerrarLote()">🏁 Encerrar lote atual</button>
+        <button class="azul-escuro" type="button" data-action="encerrar-lote">🏁 Encerrar lote atual</button>
       </div>
 
       <div id="comparativoCard" class="painel-card" style="display:none; margin-bottom:18px;">
@@ -160,9 +138,9 @@
   <section id="aba-lote-detalhe" class="aba-conteudo">
     <div class="conteudo">
       <div class="detalhe-topo">
-        <button class="azul-escuro" onclick="mostrarAba('lotes')">← Voltar aos Lotes</button>
+        <button class="azul-escuro" type="button" data-action="voltar-lotes">← Voltar aos Lotes</button>
         <div class="detalhe-titulo" id="detTitulo">—</div>
-        <button class="cinza" onclick="imprimirLote()">🖨 Imprimir lote</button>
+        <button class="cinza" type="button" data-action="imprimir-lote">🖨 Imprimir lote</button>
       </div>
 
       <div class="indicadores" id="detIndicadores"></div>
@@ -170,27 +148,7 @@
       <h3 class="secao-tit">📋 Biometrias do lote</h3>
       <div class="tabela-wrap">
         <table id="detTabela">
-          <thead>
-            <tr class="grupos">
-              <th class="g0"></th>
-              <th class="g1" colspan="7">INFORMAÇÕES DE BIOMETRIA — SEMANAL</th>
-              <th class="g2" colspan="4">CONSUMO DE RAÇÃO E CONVERSÃO</th>
-            </tr>
-            <tr class="colunas">
-              <th>Data</th>
-              <th>Saldo de<br>Peixes</th>
-              <th>Peixes<br>Capturados</th>
-              <th>Peso Médio<br>(g)</th>
-              <th>Ganho peso<br>diário (g)</th>
-              <th>Biomassa<br>Total (kg)</th>
-              <th>Ganho de<br>Biomassa (kg)</th>
-              <th>Ganho Biomassa<br>Acum. (kg)</th>
-              <th>Ração do<br>Período (kg)</th>
-              <th>Conversão<br>Período</th>
-              <th>Ração Acum.<br>(kg)</th>
-              <th>Conversão<br>Acum.</th>
-            </tr>
-          </thead>
+          <thead><!-- gerado por montarThead() em app.js --></thead>
           <tbody id="detCorpo"></tbody>
         </table>
       </div>
@@ -226,42 +184,46 @@
 
 <!-- ============ MODAL: SINCRONIZAÇÃO GOOGLE PLANILHAS ============ -->
 <div class="modal-bg" id="modalSync">
-  <div class="modal">
-    <h3>🔗 Sincronizar com Google Planilhas</h3>
-    <p class="modal-sub">Mão única: tudo que você digita aqui é copiado automaticamente para a sua planilha do Google — um backup seguro na nuvem.</p>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloSync">
+    <h3 id="tituloSync">🔗 Sincronizar com Google Planilhas</h3>
+    <p class="modal-sub">Mão dupla: tudo que você digita é copiado para a sua planilha do Google e, ao abrir o app em outro aparelho, os dados mais recentes são baixados de volta — assim PC e celular ficam iguais.</p>
     <ol class="modal-passos">
       <li>Crie uma planilha no Google Sheets.</li>
       <li>Menu <b>Extensões → Apps Script</b>, apague tudo e cole o código do arquivo <b>apps-script.gs</b>.</li>
       <li><b>Implantar → Novo app da web</b> → acesso <b>“Qualquer pessoa”</b> → copie a URL (termina em <b>/exec</b>).</li>
       <li>Cole a URL abaixo e toque em <b>Salvar e conectar</b>.</li>
     </ol>
-    <label class="modal-rot">URL do app da web</label>
+    <label class="modal-rot" for="inpSyncUrl">URL do app da web</label>
     <input id="inpSyncUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec">
     <div id="syncMsg" class="modal-msg"></div>
     <div class="modal-acoes">
-      <button class="verde" onclick="salvarUrlSync()">Salvar e conectar</button>
-      <button class="azul-escuro" onclick="testarSync()">Testar conexão</button>
-      <button class="cinza" onclick="fecharConfigSync()">Fechar</button>
+      <button class="verde" type="button" data-action="salvar-url">Salvar e conectar</button>
+      <button class="azul-escuro" type="button" data-action="testar-sync">Testar conexão</button>
+      <button class="cinza" type="button" data-action="fechar-sync">Fechar</button>
     </div>
-    <button class="link-desconectar" onclick="desconectarSync()">Desconectar planilha</button>
+    <button class="link-desconectar" type="button" data-action="desconectar">Desconectar planilha</button>
   </div>
 </div>
 
 <!-- ============ MODAL: CONFIRMAR EXCLUSÃO ============ -->
 <div class="modal-bg" id="modalLimpar">
-  <div class="modal modal-perigo">
-    <h3>🗑 Apagar todos os dados?</h3>
+  <div class="modal modal-perigo" role="dialog" aria-modal="true" aria-labelledby="tituloLimpar">
+    <h3 id="tituloLimpar">🗑 Apagar todos os dados?</h3>
     <p class="modal-sub">Esta ação apaga <b>todas as biometrias e o cabeçalho</b> deste tanque — no app e também na sua planilha do Google. <b>Não dá para desfazer.</b></p>
     <p class="modal-sub">Quer guardar uma cópia antes? Feche e clique em <b>💾 Salvar Backup</b>.</p>
-    <label class="modal-rot">Para confirmar, digite <b>APAGAR</b> abaixo:</label>
-    <input id="inpConfirmaApagar" type="text" placeholder="APAGAR" autocomplete="off" oninput="validarApagar()">
+    <label class="modal-rot" for="inpConfirmaApagar">Para confirmar, digite <b>APAGAR</b> abaixo:</label>
+    <input id="inpConfirmaApagar" type="text" placeholder="APAGAR" autocomplete="off">
     <div class="modal-acoes">
-      <button class="vermelho-acao" id="btnConfirmaApagar" onclick="confirmarLimpeza()" disabled>Apagar tudo</button>
-      <button class="cinza" onclick="fecharLimpar()">Cancelar</button>
+      <button class="vermelho-acao" type="button" id="btnConfirmaApagar" data-action="confirmar-limpeza" disabled>Apagar tudo</button>
+      <button class="cinza" type="button" data-action="fechar-limpar">Cancelar</button>
     </div>
   </div>
 </div>
 
-<script src="script.js"></script>
+<!-- Carregar nesta ordem: util -> calculo/grafico -> app (escopo global compartilhado) -->
+<script src="util.js"></script>
+<script src="calculo.js"></script>
+<script src="grafico.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

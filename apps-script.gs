@@ -1,15 +1,28 @@
+// Senha (token): DEVE ser idêntico ao TOKEN_PLANILHA do app.js do app.
+var TOKEN = 'cpcl_8Kq3Zr9TmW2yF7nLpX5';
+// Chave onde guardamos o "estado cru" do lote em andamento (mão dupla)
+var CHAVE_ESTADO = 'estado_atual';
+
 function doPost(e) {
   var resposta = { ok: false };
   try {
-    var dados  = JSON.parse(e.postData.contents);
+    var dados = JSON.parse(e.postData.contents);
 
-    // ---- Senha (token): só grava se o app enviar o código certo ----
-    // DEVE ser idêntico ao TOKEN_PLANILHA do script.js do app.
-    var TOKEN = 'cpcl_8Kq3Zr9TmW2yF7nLpX5';
+    // ---- só grava se o app enviar o código certo ----
     if (dados.token !== TOKEN) {
       return ContentService
         .createTextOutput(JSON.stringify({ ok: false, erro: 'Token inválido' }))
         .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ---- MÃO DUPLA: guarda o estado cru p/ outros aparelhos baixarem ----
+    if (dados.estado) {
+      try {
+        PropertiesService.getScriptProperties().setProperty(
+          CHAVE_ESTADO,
+          JSON.stringify({ estado: dados.estado, ts: Number(dados.estadoTs) || 0 })
+        );
+      } catch (e2) { /* estado grande demais: ignora, a planilha já foi salva */ }
     }
 
     var nomeAba = (dados.aba || 'Biometria').toString().substring(0, 90);
@@ -50,9 +63,21 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// Permite testar a URL pelo navegador (deve mostrar uma mensagem de "ativo")
-function doGet() {
+// Devolve o estado mais recente (mão dupla) quando o app pede com ?token=...
+// Sem token, só confirma que o Web App está ativo (testar pelo navegador).
+function doGet(e) {
+  var out = { ok: true, msg: 'Web App da Biometria ativo' };
+  if (e && e.parameter && e.parameter.token === TOKEN) {
+    var saved = PropertiesService.getScriptProperties().getProperty(CHAVE_ESTADO);
+    if (saved) {
+      try {
+        var p = JSON.parse(saved);
+        out.estado = p.estado;
+        out.estadoTs = p.ts || 0;
+      } catch (x) { /* ignora estado corrompido */ }
+    }
+  }
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, msg: 'Web App da Biometria ativo' }))
+    .createTextOutput(JSON.stringify(out))
     .setMimeType(ContentService.MimeType.JSON);
 }
