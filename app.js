@@ -424,6 +424,37 @@ async function sincronizar() {
   }
 }
 
+/* Envio "à prova de fechamento": dispara AGORA, mesmo se o celular estiver
+   matando a página. Usa sendBeacon (o navegador garante a entrega) e, se não
+   houver, cai pro fetch com keepalive. Sem espera de resposta. */
+function flushSync() {
+  if (!urlPlanilha || _sincronizandoInicial) return;
+  try {
+    const matriz = matrizParaPlanilha().map(l => (Array.isArray(l) ? l : []).map(celulaSegura));
+    const corpo = JSON.stringify({
+      token: TOKEN_PLANILHA,
+      aba: "Tanque " + ($("tanque").value || "01"),
+      matriz,
+      estado: coletarEstado(),
+      estadoTs: Number(localStorage.getItem(CHAVE_TS)) || 0,
+    });
+    clearTimeout(syncTimer);
+    // text/plain é "simples" => sem preflight de CORS, igual aos outros envios
+    const blob = new Blob([corpo], { type: "text/plain;charset=UTF-8" });
+    if (navigator.sendBeacon && navigator.sendBeacon(urlPlanilha, blob)) {
+      syncPendente = false;
+    } else {
+      fetch(urlPlanilha, { method: "POST", body: corpo, keepalive: true }).then(() => { syncPendente = false; }).catch(() => {});
+    }
+  } catch (e) { /* se falhar, o sync normal/online tenta de novo depois */ }
+}
+
+/* Salva tudo o que estiver pendente (chamado ao ocultar/fechar a página) */
+function flushTudo() {
+  salvarAgora();
+  if (syncPendente) flushSync();
+}
+
 /* MÃO DUPLA: baixa o estado mais recente da planilha ao abrir o app.
    Só substitui o que está na tela se a versão da nuvem for mais nova
    (compara a data/hora). Em caso de falha/offline, mantém os dados locais. */
@@ -789,9 +820,12 @@ function init() {
   $("arquivoBackup").addEventListener("change", e => abrirBackup(e.target));
   $("inpConfirmaApagar").addEventListener("input", validarApagar);
 
-  // Salva pendências ao sair/ocultar a página (compensa o debounce)
-  window.addEventListener("beforeunload", salvarAgora);
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") salvarAgora(); });
+  // Salva E envia o que estiver pendente ao ocultar/fechar a página.
+  // pagehide + visibilitychange("hidden") são os sinais confiáveis no celular
+  // (beforeunload é ignorado por muitos navegadores mobile).
+  window.addEventListener("pagehide", flushTudo);
+  window.addEventListener("beforeunload", flushTudo);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushTudo(); });
   // Quando a internet voltar, reenvia se ficou algo pendente
   window.addEventListener("online", () => { if (syncPendente) sincronizar(); });
 
